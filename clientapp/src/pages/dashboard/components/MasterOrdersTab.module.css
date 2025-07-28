@@ -1,0 +1,145 @@
+.orderCard {
+  transition: all 0.2s ease-in-out;
+}
+
+.orderCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid;
+}
+
+.statusPending {
+  color: #d97706;
+  background-color: #fef3c7;
+  border-color: #fbbf24;
+}
+
+.statusConfirmed {
+  color: #059669;
+  background-color: #d1fae5;
+  border-color: #34d399;
+}
+
+.statusCompleted {
+  color: #2563eb;
+  background-color: #dbeafe;
+  border-color: #60a5fa;
+}
+
+.statusCancelled,
+.statusDeclined {
+  color: #dc2626;
+  background-color: #fee2e2;
+  border-color: #f87171;
+}
+
+.statusAlternativeProposed {
+  color: #7c3aed;
+  background-color: #ede9fe;
+  border-color: #a78bfa;
+}
+
+.statusTimeout {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.tabWithNotification {
+  position: relative;
+}
+
+.notificationDot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: #dc2626;
+  border-radius: 50%;
+}
+
+.orderImage {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.clientNotes {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.masterNotes {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.emptyStateIcon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  color: #9ca3af;
+}
+
+.loadingSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #dc2626;
+}
+
+.errorIcon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .orderImage {
+    width: 40px;
+    height: 40px;
+  }
+} 

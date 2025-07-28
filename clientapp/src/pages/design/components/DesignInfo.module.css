@@ -1,0 +1,110 @@
+.infoCard {
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.description {
+  padding: 1rem;
+  background: var(--muted);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.priceInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--muted);
+  border-radius: 8px;
+}
+
+.price {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.colorInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.colorLabel {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.colorSwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+}
+
+.colorValue {
+  font-size: 0.875rem;
+  font-family: monospace;
+  color: var(--muted-foreground);
+}
+
+.metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.statusBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+}
+
+.sourceBadge {
+  background: var(--accent);
+  color: var(--accent-foreground);
+} 

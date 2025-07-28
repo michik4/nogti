@@ -1,0 +1,6 @@
+.ratingContainer{
+    width: 100%;
+    background-color: hsl(var(--secondary));
+    min-height: 50px;
+    border-radius: var(--radius);
+}

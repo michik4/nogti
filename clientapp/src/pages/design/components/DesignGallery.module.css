@@ -1,0 +1,102 @@
+.galleryCard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.mediaContainer {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  background: var(--muted);
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.image.zoomed {
+  transform: scale(1.5);
+  cursor: zoom-out;
+}
+
+.videoWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videoControls {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.controlButton {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  backdrop-filter: blur(4px);
+}
+
+.controlButton:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.zoomButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  backdrop-filter: blur(4px);
+}
+
+.zoomButton:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.mediaToggle {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .mediaContainer {
+    height: 300px;
+  }
+  
+  .videoControls,
+  .zoomButton,
+  .mediaToggle {
+    transform: scale(0.9);
+  }
+} 

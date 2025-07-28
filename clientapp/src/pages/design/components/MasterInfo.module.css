@@ -1,0 +1,559 @@
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.content {
+  padding: 0;
+}
+
+.noMasters {
+  text-align: center;
+  color: var(--muted-foreground);
+  padding: 2rem;
+  font-style: italic;
+}
+
+.headerWithNavigation {
+  display: flex;
+  align-items: center;
+  justify-content: between;
+  gap: 1rem;
+}
+
+.navigationButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.navButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.navButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mastersList {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 0.5rem;
+  /* Скрываем скроллбар */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mastersList::-webkit-scrollbar {
+  display: none;
+}
+
+.masterCard {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.masterCard {
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  background: hsl(var(--card));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  /* Четкие края без антиалиасинга */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  image-rendering: crisp-edges;
+  /* Принудительное использование пиксельной сетки */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Стили для отдельных карточек мастеров */
+.mastersList > div {
+  min-width: 300px;
+  flex-shrink: 0;
+}
+
+.masterCard:hover {
+  border-color: hsl(var(--border)/0.3);
+}
+
+/* Верхняя секция с flex */
+.masterHero {
+  display: flex;
+  height: 80px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* Фоновая часть (слева) */
+.backgroundSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroOverlay {
+  display: flex;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(1px);
+  align-items: center;
+  justify-content: center;
+}
+
+/* Блок с информацией о мастере на фоне */
+.masterInfoOverlay {
+  width: 100%;
+  margin: 10px;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 8px 12px;
+  z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.overlayNameWrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  min-width: 0; /* Позволяет flex-элементам сжиматься */
+}
+
+.overlayName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.overlayRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.overlayReviews {
+  color: #6b7280;
+  font-size: 0.7rem;
+}
+
+/* Секция аватара (справа) */
+.avatarSection {
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+}
+
+.flexAvatar {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 0 !important;
+  border-left: 3px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.flexAvatar img {
+  border-radius: 0 !important;
+  object-fit: cover !important;
+}
+
+.avatarFallback {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-radius: 0 !important;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.topBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+  z-index: 3;
+}
+
+
+
+/* Контентная секция */
+.masterContent {
+  padding: 0.75rem 1rem 1rem 1rem;
+}
+
+.masterName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.375rem;
+  line-height: 1.2;
+}
+
+.masterRating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.ratingValue {
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: 0.875rem;
+}
+
+.reviewsCount {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.masterLocation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.75rem;
+}
+
+.masterMeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  background: var(--muted)/30;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.statusBadge {
+  font-size: 0.65rem;
+  padding: 0.125rem 0.375rem;
+  font-weight: 600;
+}
+
+.specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.specialtyBadge {
+  font-size: 0.65rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--muted)/20;
+  border-color: hsl(var(--border));
+  color: var(--muted-foreground);
+}
+
+.moreSpecs {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+
+
+.masterServices {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid hsl(var(--border));
+  position: relative;
+}
+
+.masterServices::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary)/20), transparent);
+}
+
+.servicesHeader {
+  margin-bottom: 0.75rem;
+}
+
+.servicesTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, hsl(var(--primary)/10), hsl(var(--primary)/5));
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--primary)/20);
+  margin: 0 0.75rem;
+}
+
+.servicesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.75rem;
+}
+
+.noActiveServices {
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.bookingButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: all 0.2s;
+}
+
+.bookingButton:hover {
+  background: var(--primary);
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.authButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  color: var(--muted-foreground);
+  transition: all 0.2s;
+}
+
+.authButton:hover {
+  color: var(--foreground);
+  background: var(--accent);
+  transform: translateY(-1px);
+}
+
+.disabledButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bookButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.bookButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bookButton:hover:not(:disabled) {
+  background: hsl(var(--primary));
+  opacity: 0.9;
+}
+
+.viewAllButton {
+  width: 100%;
+  margin-top: 1rem;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.viewAllButton:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+@media (max-width: 768px) {
+  .masterCard {
+    border-radius: 8px;
+  }
+  
+  .headerWithNavigation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .navigationButtons {
+    align-self: flex-end;
+  }
+  
+  .navButton {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .mastersList {
+    gap: 1rem;
+  }
+  
+  .mastersList > div {
+    min-width: 280px;
+  }
+  
+  .masterHero {
+    height: 60px;
+  }
+  
+  .avatarSection {
+    width: 60px;
+  }
+  
+  .flexAvatar {
+    width: 48px;
+    height: 48px;
+    border-width: 1px;
+  }
+
+  .avatarFallback {
+    font-size: 1rem;
+  }
+  
+  .masterContent {
+    padding: 0.5rem 0.75rem 0.75rem 0.75rem;
+  }
+  
+  .masterInfoOverlay {
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+  }
+  
+  .overlayNameWrapper {
+    margin-bottom: 2px;
+  }
+  
+  .overlayName {
+    font-size: 0.8rem;
+  }
+  
+  .overlayRating {
+    gap: 3px;
+    font-size: 0.7rem;
+  }
+  
+  .overlayReviews {
+    font-size: 0.65rem;
+  }
+  
+  .masterLocation {
+    font-size: 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .masterMeta {
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .metaItem {
+    font-size: 0.65rem;
+    padding: 0.125rem 0.25rem;
+  }
+  
+  .statusBadge {
+    font-size: 0.6rem;
+    padding: 0.125rem 0.25rem;
+  }
+  
+  .specialties {
+    gap: 0.25rem;
+  }
+  
+  .specialtyBadge {
+    font-size: 0.6rem;
+    padding: 0.125rem 0.25rem;
+  }
+  
+  .moreSpecs {
+    font-size: 0.6rem;
+  }
+  
+  .servicesList {
+    gap: 0.5rem;
+  }
+  
+  .topBadge {
+    top: 6px;
+    right: 6px;
+    font-size: 0.6rem;
+    padding: 0.125rem 0.25rem;
+  }
+} 

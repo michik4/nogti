@@ -1,0 +1,98 @@
+.serviceCard {
+  @apply bg-gradient-to-br from-card to-muted/20 rounded-lg p-4 border border-border/60 transition-all hover:border-primary/50 hover:shadow-md hover:scale-[1.02];
+}
+
+.serviceHeader {
+  @apply flex items-start justify-between mb-3;
+}
+
+.serviceInfo {
+  @apply flex-1;
+}
+
+.serviceName {
+  @apply font-medium text-sm mb-1;
+}
+
+.serviceDescription {
+  @apply text-xs text-muted-foreground line-clamp-2;
+}
+
+.statusBadge {
+  @apply text-xs shrink-0;
+}
+
+.serviceDetails {
+  @apply space-y-2 mb-3;
+}
+
+.priceSection {
+  @apply flex items-center justify-between;
+}
+
+.priceInfo {
+  @apply flex items-center gap-2;
+}
+
+.priceText {
+  @apply flex items-center gap-2;
+}
+
+.currentPrice {
+  @apply font-semibold text-primary;
+}
+
+.basePrice {
+  @apply text-xs text-muted-foreground line-through;
+}
+
+.customPriceBadge {
+  @apply text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 shadow-sm flex items-center gap-1;
+}
+
+.durationInfo {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.additionalTime {
+  @apply text-xs text-muted-foreground;
+}
+
+.notesInfo {
+  @apply flex items-start gap-2 text-xs text-muted-foreground;
+}
+
+.notes {
+  @apply line-clamp-2;
+}
+
+.actions {
+  @apply pt-3 border-t border-border/30;
+}
+
+.serviceCard:nth-child(1) {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.serviceCard:nth-child(2) {
+  animation: slideInUp 0.4s ease-out 0.1s both;
+}
+
+.serviceCard:nth-child(3) {
+  animation: slideInUp 0.4s ease-out 0.2s both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bookingButton {
+  @apply w-full h-9 text-sm gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-sm transition-all duration-200;
+} 

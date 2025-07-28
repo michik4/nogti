@@ -1,0 +1,120 @@
+.actionsCard {
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.primaryActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.likeButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.likeButton:hover {
+  transform: translateY(-1px);
+}
+
+.bookingButton {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.bookingButton:hover {
+  background: var(--primary);
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.authButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  transition: all 0.2s;
+}
+
+.authButton:hover {
+  color: var(--foreground);
+  background: var(--accent);
+  transform: translateY(-1px);
+}
+
+.disabledButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondaryActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.actionButton {
+  justify-content: flex-start;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+
+.actionButton:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.reportButton {
+  justify-content: flex-start;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.reportButton:hover {
+  color: var(--destructive);
+  background: var(--destructive);
+  background-opacity: 0.1;
+}
+
+@media (max-width: 768px) {
+  .primaryActions {
+    flex-direction: column;
+  }
+  
+  .likeButton,
+  .bookingButton,
+  .authButton,
+  .disabledButton {
+    flex: 1;
+  }
+} 

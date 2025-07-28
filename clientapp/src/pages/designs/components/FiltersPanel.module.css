@@ -1,0 +1,206 @@
+.panel {
+  width: 100%;
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Filter groups */
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.select {
+  width: 100%;
+}
+
+/* Color selection */
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2rem, 1fr));
+  gap: 0.5rem;
+  max-width: 300px;
+}
+
+.colorSwatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.25rem;
+  border: 2px solid hsl(var(--border));
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.1);
+  border-color: hsl(var(--primary));
+}
+
+.colorSwatch.selected {
+  border-color: hsl(var(--primary));
+  border-width: 3px;
+  transform: scale(1.05);
+}
+
+.colorSwatch.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: hsl(var(--primary-foreground));
+  font-weight: bold;
+  font-size: 0.8rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+
+
+/* Tags */
+.popularTags, .selectedTags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tagsSubtitle {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+.tagsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tagButton {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.tagButton:hover {
+  transform: translateY(-1px);
+}
+
+.selectedTag {
+  position: relative;
+  padding-right: 1.5rem;
+}
+
+.removeTagButton {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease-in-out;
+}
+
+.removeTagButton:hover {
+  color: hsl(var(--foreground));
+}
+
+.customTagForm {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tagInput {
+  flex: 1;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+  justify-content: flex-end;
+}
+
+.resetButton, .applyButton {
+  min-width: 6rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .content {
+    gap: 1.25rem;
+  }
+
+  .colorGrid {
+    grid-template-columns: repeat(auto-fit, minmax(1.75rem, 1fr));
+    gap: 0.4rem;
+  }
+
+  .colorSwatch {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .resetButton, .applyButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .tagsGrid {
+    gap: 0.25rem;
+  }
+
+  .tagButton {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .customTagForm {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .customTagForm button {
+    width: 100%;
+  }
+} 

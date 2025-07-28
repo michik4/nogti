@@ -1,0 +1,206 @@
+/* Контейнер компонента */
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Группа аватара с hover эффектами */
+.avatarGroup {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatarGroup:hover .hoverOverlay {
+  opacity: 1;
+}
+
+/* Размеры аватара */
+.avatarSm {
+  width: 4rem;
+  height: 4rem;
+}
+
+.avatarMd {
+  width: 6rem;
+  height: 6rem;
+}
+
+.avatarLg {
+  width: 8rem;
+  height: 8rem;
+}
+
+/* Базовые стили аватара */
+.avatar {
+  transition: all 0.2s ease-in-out;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: hsl(var(--muted));
+}
+
+.avatar.uploading {
+  opacity: 0.75;
+}
+
+/* Стили для изображения аватара */
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Fallback текст */
+.avatarFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  background-color: hsl(var(--muted));
+  border-radius: 50%;
+}
+
+/* Overlay с индикатором загрузки */
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hover overlay с кнопкой камеры */
+.hoverOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.hoverOverlay:disabled {
+  cursor: not-allowed;
+}
+
+/* Размеры иконок */
+.iconSm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.iconMd {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.iconLg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* Анимация вращения для загрузки */
+.loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Контейнер кнопки загрузки */
+.buttonContainer {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Стили кнопки */
+.uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.875rem;
+}
+
+.uploadButton:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Размеры кнопки */
+.buttonSm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.buttonMd {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.buttonLg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Информационный текст о лимитах файла */
+.fileInfo {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+  line-height: 1.3;
+  margin-top: 0.25rem;
+}
+
+.fileInfo.small {
+  font-size: 0.625rem;
+}
+
+.fileInfo.medium {
+  font-size: 0.75rem;
+}
+
+.fileInfo.large {
+  font-size: 0.875rem;
+}
+
+/* Скрытый input */
+.hiddenInput {
+  display: none;
+} 

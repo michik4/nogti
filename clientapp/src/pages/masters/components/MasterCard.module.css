@@ -1,0 +1,191 @@
+.masterCard {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+
+.masterCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px hsl(var(--primary) / 0.15);
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+.cardHeader {
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.masterInfo {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+}
+
+.masterDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.masterName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.ratingValue {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.reviewsCount {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.cardContent {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.experience {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 1rem;
+}
+
+.specialties {
+  margin-bottom: 1rem;
+}
+
+.specialtiesHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.5rem;
+}
+
+.specialtiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.specialtyBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.moreBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.description {
+  margin-bottom: 1rem;
+}
+
+.descriptionText {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+  margin: 0;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.statValue {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.status {
+  display: flex;
+  justify-content: center;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .masterCard {
+    border-radius: calc(var(--radius) - 2px);
+  }
+  
+  .cardHeader {
+    padding: 1rem 1rem 0.75rem;
+  }
+  
+  .cardContent {
+    padding: 0 1rem 1rem;
+  }
+  
+  .masterInfo {
+    gap: 0.75rem;
+  }
+  
+  .avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  .masterName {
+    font-size: 1rem;
+  }
+  
+  .stats {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .statItem {
+    justify-content: space-between;
+    width: 100%;
+  }
+} 

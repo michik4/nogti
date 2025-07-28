@@ -1,0 +1,373 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { authService } from '@/services/authService';
+import { LoginRequest, RegisterRequest, AuthResponse } from '@/types/api.types';
+import { User, Client, Master, Admin, Guest } from '@/types/user.types';
+
+interface AuthContextType {
+  // Состояние аутентификации
+  user: User | Guest | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+
+  // Методы аутентификации
+  login: (credentials: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
+  logout: () => void;
+
+  // Гостевые сессии
+  createGuestSession: () => Guest;
+  convertGuestToUser: (userType: 'client' | 'nailmaster', userData: Partial<RegisterRequest>) => Promise<void>;
+
+  // Проверки ролей
+  isClient: () => boolean;
+  isMaster: () => boolean;
+  isAdmin: () => boolean;
+  isGuest: () => boolean;
+
+  // Обновление профиля
+  refreshUser: () => Promise<void>;
+  updateUser: (userData: Partial<User | Guest>) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | Guest | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  // Инициализация при загрузке приложения
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  /**
+   * Инициализация аутентификации
+   */
+  const initializeAuth = async () => {
+    // Предотвращаем множественные одновременные инициализации
+    if (isInitializing) {
+      return;
+    }
+
+    try {
+      setIsInitializing(true);
+      setIsLoading(true);
+
+      // Проверяем, есть ли действующий токен
+      if (authService.isAuthenticated()) {
+        try {
+          // ПРИОРИТЕТ: Получаем актуальные данные с сервера
+          const profile = await authService.getProfile();
+          
+          console.log('Профиль загружен с сервера:', profile);
+          setUser(profile);
+          // Удаляем гостевую сессию при успешной аутентификации
+          clearGuestSession();
+        } catch (error) {
+          console.error('Ошибка загрузки профиля с сервера:', error);
+          
+          // FALLBACK: Только если сервер недоступен, используем данные из токена
+          // Но предупреждаем о возможных проблемах с кодировкой
+          try {
+            const currentUserFromToken = authService.getCurrentUser();
+            
+            if (currentUserFromToken) {
+              console.warn('Используются данные из JWT токена. Кириллические символы могут отображаться некорректно.');
+              console.warn('Попробуйте обновить страницу для повторной загрузки с сервера.');
+              setUser(currentUserFromToken);
+              clearGuestSession();
+              
+              // Попытаемся обновить данные в фоне
+              setTimeout(async () => {
+                try {
+                  const freshProfile = await authService.getProfile();
+                  console.log('Профиль обновлен в фоне:', freshProfile);
+                  setUser(freshProfile);
+                } catch (retryError) {
+                  console.warn('Не удалось обновить профиль в фоне:', retryError);
+                }
+              }, 2000);
+            } else {
+              // Токен есть, но декодировать не удалось - очищаем
+              console.error('Не удалось декодировать данные пользователя из токена');
+              authService.logout();
+              checkGuestSession();
+            }
+          } catch (tokenError) {
+            console.error('Ошибка обработки токена:', tokenError);
+            authService.logout();
+            checkGuestSession();
+          }
+        }
+      } else {
+        // Проверяем гостевую сессию
+        checkGuestSession();
+      }
+    } catch (error) {
+      console.error('Ошибка инициализации аутентификации:', error);
+      authService.logout();
+      checkGuestSession();
+    } finally {
+      setIsLoading(false);
+      setIsInitializing(false);
+    }
+  };
+
+  /**
+   * Очистка гостевой сессии
+   */
+  const clearGuestSession = () => {
+    localStorage.removeItem('guestSession');
+  };
+
+  /**
+   * Проверка сохраненной гостевой сессии
+   */
+  const checkGuestSession = () => {
+    const savedGuestSession = localStorage.getItem('guestSession');
+    if (savedGuestSession) {
+      try {
+        const guestUser = JSON.parse(savedGuestSession);
+        // Проверяем, что сессия не старше 24 часов
+        const sessionAge = Date.now() - new Date(guestUser.createdAt).getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        if (sessionAge < twentyFourHours) {
+          setUser(guestUser);
+        } else {
+          clearGuestSession();
+        }
+      } catch (error) {
+        clearGuestSession();
+      }
+    }
+  };
+
+  /**
+   * Авторизация пользователя
+   */
+  const login = async (credentials: LoginRequest): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const authResponse = await authService.login(credentials);
+
+      // Получаем пользователя из токена
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        // Удаляем гостевую сессию при успешной авторизации
+        clearGuestSession();
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Регистрация пользователя
+   */
+  const register = async (data: RegisterRequest): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const authResponse = await authService.register(data);
+
+      // Получаем пользователя из токена
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        // Удаляем гостевую сессию при успешной регистрации
+        clearGuestSession();
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Выход из системы
+   */
+  const logout = () => {
+    try {
+      // Очищаем данные авторизации
+      authService.logout();
+      
+      // Очищаем гостевую сессию
+      clearGuestSession();
+      
+      // Очищаем состояние пользователя
+      setUser(null);
+      
+      // Дополнительная очистка всех возможных данных пользователя из localStorage
+      const keysToRemove = [
+        'auth_token',
+        'refresh_token', 
+        'guestSession',
+        'user_preferences',
+        'cached_user_data'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (error) {
+          console.warn(`Не удалось очистить ${key} из localStorage:`, error);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Ошибка при выходе из системы:', error);
+      // В случае ошибки всё равно очищаем состояние
+      setUser(null);
+    }
+  };
+
+  /**
+   * Создание гостевой сессии
+   */
+  const createGuestSession = (): Guest => {
+    const guestUser: Guest = {
+      id: `guest_${Date.now()}`,
+      name: `Гость ${Math.floor(Math.random() * 1000)}`,
+      email: '',
+      phone: '',
+      avatar: '/placeholder.svg',
+      type: 'guest',
+      location: 'Москва',
+      joinDate: new Date().toLocaleDateString('ru-RU'),
+      sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      isTemporary: true
+    };
+
+    setUser(guestUser);
+    localStorage.setItem('guestSession', JSON.stringify(guestUser));
+
+    return guestUser;
+  };
+
+  /**
+   * Преобразование гостевого аккаунта в постоянный
+   */
+  const convertGuestToUser = async (userType: 'client' | 'nailmaster', userData: Partial<RegisterRequest>): Promise<void> => {
+    if (!user || !isGuest()) return;
+
+    const guestUser = user as Guest;
+    const registerData: RegisterRequest = {
+      email: userData.email || '',
+      username: userData.username || userData.email || '',
+      password: userData.password || '',
+      role: userType,
+      fullName: userData.fullName || guestUser.name,
+      phone: userData.phone || guestUser.phone
+    };
+
+    await register(registerData);
+  };
+
+  /**
+   * Обновление информации о пользователе
+   */
+  const refreshUser = async (): Promise<void> => {
+    if (!authService.isAuthenticated()) return;
+
+    try {
+      // ПРИОРИТЕТ: Всегда пытаемся получить свежие данные с сервера
+      const profile = await authService.getProfile();
+      console.log('Профиль обновлен с сервера:', profile);
+      setUser(profile);
+      // Удаляем гостевую сессию при обновлении пользователя
+      clearGuestSession();
+    } catch (error) {
+      console.error('Ошибка обновления пользователя с сервера:', error);
+      
+      // МИНИМАЛЬНЫЙ FALLBACK: Используем JWT только в крайнем случае
+      // и только если текущий пользователь отсутствует
+      if (!user) {
+        console.warn('Попытка загрузки данных из JWT токена как fallback');
+        try {
+          const currentUser = authService.getCurrentUser();
+          if (currentUser) {
+            console.warn('Данные загружены из JWT. Возможны проблемы с кодировкой кириллических символов.');
+            setUser(currentUser);
+            clearGuestSession();
+          }
+        } catch (tokenError) {
+          console.error('Fallback на JWT также не удался:', tokenError);
+        }
+      } else {
+        console.warn('Сохраняем текущие данные пользователя, так как сервер недоступен');
+      }
+      
+      // Не выбрасываем ошибку, чтобы не нарушать работу приложения
+    }
+  };
+
+  /**
+   * Обновление данных пользователя
+   */
+  const updateUser = (userData: Partial<User | Guest>) => {
+    if (user) {
+      setUser(prevUser => ({ ...prevUser, ...userData }));
+    }
+  };
+
+  // Проверки ролей и типов
+  const isAuthenticated = useMemo(() => {
+    try {
+      return authService.isAuthenticated();
+    } catch (error) {
+      console.error('Ошибка проверки аутентификации в контексте:', error);
+      return false;
+    }
+  }, [user]);
+  const isClient = () => user && 'role' in user ? user.role === 'client' : false;
+  const isMaster = () => user && 'role' in user ? user.role === 'nailmaster' : false;
+  const isAdmin = () => user && 'role' in user ? user.role === 'admin' : false;
+  const isGuest = () => {
+    // Проверяем как поле type (для локальных гостевых сессий), так и isGuest (для серверных данных)
+    return user && (
+      ('type' in user && user.type === 'guest') ||
+      ('isGuest' in user && user.isGuest === true)
+    );
+  };
+
+  const value: AuthContextType = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    register,
+    logout,
+    createGuestSession,
+    convertGuestToUser,
+    isClient,
+    isMaster,
+    isAdmin,
+    isGuest,
+    refreshUser,
+    updateUser
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}; 
