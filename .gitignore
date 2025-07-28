@@ -17,7 +17,7 @@ build/
 
 # uploads
 uploads/
-public/uploads/
+server/public/uploads/
 
 # Node modules
 node_modules/
