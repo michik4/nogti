@@ -7,6 +7,17 @@
 const ENCRYPTION_KEY = 'nogotochki_guest_session_2024';
 
 /**
+ * Проверка, является ли строка валидной Base64
+ */
+const isValidBase64 = (str: string): boolean => {
+  try {
+    return btoa(atob(str)) === str;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Простое шифрование строки
  */
 export const encryptData = (data: string): string => {
@@ -30,6 +41,12 @@ export const encryptData = (data: string): string => {
  */
 export const decryptData = (encryptedData: string): string => {
   try {
+    // Проверяем, является ли строка валидной Base64
+    if (!isValidBase64(encryptedData)) {
+      console.warn('Строка не является валидной Base64, возвращаем как есть');
+      return encryptedData;
+    }
+
     const decoded = atob(encryptedData); // Base64 декодирование
     let decrypted = '';
     for (let i = 0; i < decoded.length; i++) {
@@ -66,13 +83,24 @@ export const secureGetItem = (key: string): any => {
     const encrypted = localStorage.getItem(key);
     if (!encrypted) return null;
     
-    const decrypted = decryptData(encrypted);
-    return JSON.parse(decrypted);
+    // Сначала пытаемся расшифровать
+    try {
+      const decrypted = decryptData(encrypted);
+      return JSON.parse(decrypted);
+    } catch (decryptError) {
+      console.warn('Не удалось расшифровать данные, пробуем обычное чтение:', decryptError);
+      
+      // Fallback к обычному получению
+      try {
+        return JSON.parse(encrypted);
+      } catch (parseError) {
+        console.error('Не удалось распарсить данные:', parseError);
+        return null;
+      }
+    }
   } catch (error) {
     console.error('Ошибка получения данных:', error);
-    // Fallback к обычному получению
-    const fallback = localStorage.getItem(key);
-    return fallback ? JSON.parse(fallback) : null;
+    return null;
   }
 };
 

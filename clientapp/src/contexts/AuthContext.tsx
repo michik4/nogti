@@ -141,23 +141,65 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   /**
+   * Миграция старых гостевых данных в новый формат
+   */
+  const migrateOldGuestData = (): void => {
+    try {
+      // Проверяем, есть ли старые данные в localStorage
+      const oldData = localStorage.getItem('guestSession');
+      if (oldData) {
+        try {
+          const parsedData = JSON.parse(oldData);
+          // Если данные успешно распарсились, но не содержат sessionDuration, 
+          // значит это старые данные - пересохраняем в новом формате
+          if (parsedData && typeof parsedData === 'object' && parsedData.id && !parsedData.sessionDuration) {
+            console.log('Мигрируем старые данные гостевой сессии');
+            const migratedData = {
+              ...parsedData,
+              sessionDuration: 24 * 60 * 60 * 1000 // Добавляем время жизни по умолчанию
+            };
+            secureSetItem('guestSession', migratedData);
+          }
+        } catch (parseError) {
+          console.warn('Не удалось распарсить старые данные гостевой сессии');
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка миграции гостевых данных:', error);
+    }
+  };
+
+  /**
    * Получение текущей гостевой сессии
    */
   const getGuestSession = (): Guest | null => {
+    // Сначала пытаемся мигрировать старые данные
+    migrateOldGuestData();
+    
     const savedGuestSession = secureGetItem('guestSession');
     if (savedGuestSession) {
       try {
         const guestUser = savedGuestSession;
-        // Проверяем, что сессия не старше 24 часов
+        
+        // Проверяем, что это действительно объект гостевой сессии
+        if (!guestUser || typeof guestUser !== 'object' || !guestUser.id) {
+          console.warn('Некорректные данные гостевой сессии, очищаем');
+          clearGuestSession();
+          return null;
+        }
+        
+        // Проверяем, что сессия не старше установленного времени
         const sessionAge = Date.now() - new Date(guestUser.createdAt).getTime();
-        const twentyFourHours = 24 * 60 * 60 * 1000;
+        const sessionDuration = guestUser.sessionDuration || 24 * 60 * 60 * 1000; // По умолчанию 24 часа
 
-        if (sessionAge < twentyFourHours) {
+        if (sessionAge < sessionDuration) {
           return guestUser;
         } else {
+          console.log('Гостевая сессия истекла, очищаем');
           clearGuestSession();
         }
       } catch (error) {
+        console.error('Ошибка обработки гостевой сессии:', error);
         clearGuestSession();
       }
     }
