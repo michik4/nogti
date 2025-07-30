@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import { authService } from '@/services/authService';
 import { LoginRequest, RegisterRequest, AuthResponse } from '@/types/api.types';
 import { User, Client, Master, Admin, Guest } from '@/types/user.types';
+import { secureSetItem, secureGetItem, secureRemoveItem } from '@/utils/encryption.util';
 
 interface AuthContextType {
   // Состояние аутентификации
@@ -15,8 +16,14 @@ interface AuthContextType {
   logout: () => void;
 
   // Гостевые сессии
-  createGuestSession: () => Guest;
+  createGuestSession: (sessionDuration?: number) => Guest;
   convertGuestToUser: (userType: 'client' | 'nailmaster', userData: Partial<RegisterRequest>) => Promise<void>;
+  
+  // Локальные возможности для гостевых пользователей
+  updateGuestData: (data: Partial<Guest>) => void;
+  clearGuestSession: () => void;
+  getGuestSession: () => Guest | null;
+  getGuestSessionTimeLeft: () => number; // Время жизни сессии в миллисекундах
 
   // Проверки ролей
   isClient: () => boolean;
@@ -130,29 +137,64 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Очистка гостевой сессии
    */
   const clearGuestSession = () => {
-    localStorage.removeItem('guestSession');
+    secureRemoveItem('guestSession');
   };
 
   /**
-   * Проверка сохраненной гостевой сессии
+   * Получение текущей гостевой сессии
    */
-  const checkGuestSession = () => {
-    const savedGuestSession = localStorage.getItem('guestSession');
+  const getGuestSession = (): Guest | null => {
+    const savedGuestSession = secureGetItem('guestSession');
     if (savedGuestSession) {
       try {
-        const guestUser = JSON.parse(savedGuestSession);
+        const guestUser = savedGuestSession;
         // Проверяем, что сессия не старше 24 часов
         const sessionAge = Date.now() - new Date(guestUser.createdAt).getTime();
         const twentyFourHours = 24 * 60 * 60 * 1000;
 
         if (sessionAge < twentyFourHours) {
-          setUser(guestUser);
+          return guestUser;
         } else {
           clearGuestSession();
         }
       } catch (error) {
         clearGuestSession();
       }
+    }
+    return null;
+  };
+
+  /**
+   * Получение времени оставшегося жизни гостевой сессии
+   */
+  const getGuestSessionTimeLeft = (): number => {
+    const guestSession = getGuestSession();
+    if (guestSession) {
+      const sessionAge = Date.now() - new Date(guestSession.createdAt).getTime();
+      const sessionDuration = guestSession.sessionDuration || 24 * 60 * 60 * 1000; // По умолчанию 24 часа
+      return Math.max(0, sessionDuration - sessionAge);
+    }
+    return 0;
+  };
+
+  /**
+   * Обновление данных гостевого пользователя
+   */
+  const updateGuestData = (data: Partial<Guest>) => {
+    if (user && isGuest()) {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      secureSetItem('guestSession', updatedUser);
+    }
+  };
+
+  /**
+   * Проверка сохраненной гостевой сессии
+   */
+  const checkGuestSession = () => {
+    const guestSession = getGuestSession();
+    if (guestSession) {
+      setUser(guestSession);
     }
   };
 
@@ -241,23 +283,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Создание гостевой сессии
    */
-  const createGuestSession = (): Guest => {
+  const createGuestSession = (sessionDuration?: number): Guest => {
+    // Генерируем более безопасный ID
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const guestId = `guest_${timestamp}_${randomId}`;
+    
+    // Генерируем случайное имя гостя
+    const guestNames = ['Анна', 'Мария', 'Елена', 'Ольга', 'Татьяна', 'Ирина', 'Наталья', 'Светлана'];
+    const randomName = guestNames[Math.floor(Math.random() * guestNames.length)];
+    const randomNumber = Math.floor(Math.random() * 1000);
+    
     const guestUser: Guest = {
-      id: `guest_${Date.now()}`,
-      name: `Гость ${Math.floor(Math.random() * 1000)}`,
+      id: guestId,
+      name: `${randomName} ${randomNumber}`,
       email: '',
       phone: '',
       avatar: '/placeholder.svg',
       type: 'guest',
       location: 'Москва',
       joinDate: new Date().toLocaleDateString('ru-RU'),
-      sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sessionId: `session_${timestamp}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
-      isTemporary: true
+      isTemporary: true,
+      sessionDuration: sessionDuration || 24 * 60 * 60 * 1000 // Устанавливаем время жизни по умолчанию
     };
 
     setUser(guestUser);
-    localStorage.setItem('guestSession', JSON.stringify(guestUser));
+    secureSetItem('guestSession', guestUser);
 
     return guestUser;
   };
@@ -268,17 +321,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const convertGuestToUser = async (userType: 'client' | 'nailmaster', userData: Partial<RegisterRequest>): Promise<void> => {
     if (!user || !isGuest()) return;
 
+    // Проверяем обязательные поля
+    if (!userData.email || !userData.password || !userData.phone) {
+      throw new Error('Не все обязательные поля заполнены');
+    }
+
     const guestUser = user as Guest;
     const registerData: RegisterRequest = {
-      email: userData.email || '',
-      username: userData.username || userData.email || '',
-      password: userData.password || '',
+      email: userData.email,
+      username: userData.username || userData.email,
+      password: userData.password,
       role: userType,
       fullName: userData.fullName || guestUser.name,
-      phone: userData.phone || guestUser.phone
+      phone: userData.phone
     };
 
-    await register(registerData);
+    try {
+      await register(registerData);
+      // Успешная регистрация автоматически очистит гостевую сессию
+    } catch (error) {
+      console.error('Ошибка конвертации гостевого аккаунта:', error);
+      throw error; // Пробрасываем ошибку для обработки в UI
+    }
   };
 
   /**
@@ -357,6 +421,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     createGuestSession,
     convertGuestToUser,
+    updateGuestData,
+    clearGuestSession,
+    getGuestSession,
+    getGuestSessionTimeLeft,
     isClient,
     isMaster,
     isAdmin,

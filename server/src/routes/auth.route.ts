@@ -16,7 +16,6 @@ const router = Router();
 
 router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
-router.post('/guest', AuthController.registerGuest);
 router.post('/refresh', AuthController.refreshToken);
 router.post('/register-admin', AuthController.registerAdmin);
 router.get('/profile', AuthMiddleware.authenticate, AuthController.getProfile);

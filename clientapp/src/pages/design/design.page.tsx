@@ -20,7 +20,7 @@ const DesignPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { toast } = useToast();
-    const { user, isAuthenticated, isLoading: authLoading, createGuestSession } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
     const { data: design, isLoading, error } = useQuery({
         queryKey: ['design', id],
@@ -34,13 +34,6 @@ const DesignPage: React.FC = () => {
         queryFn: () => designService.getMastersForDesign(id!),
         enabled: !!id && !!design?.data,
     });
-
-    // Создаем гостевую сессию если пользователя нет
-    React.useEffect(() => {
-        if (!authLoading && !user) {
-            createGuestSession();
-        }
-    }, [authLoading, user, createGuestSession]);
 
     if (isLoading) {
         return (

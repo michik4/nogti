@@ -71,4 +71,5 @@ export interface Guest {
   sessionId: string;
   createdAt: string;
   isTemporary: true;
+  sessionDuration?: number; // Время жизни сессии в миллисекундах
 } 
