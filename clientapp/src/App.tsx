@@ -72,43 +72,45 @@ function App() {
             <AuthProvider>
               <div className="min-h-screen bg-background text-foreground">
                 <Routes>
-                  <Route path="/" element={<Index />} />
 
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  <Route 
-                    path="/client-dashboard" 
+                  {/* protected routes */}
+                  <Route
+                    path="/client-dashboard"
                     element={
                       <ProtectedRoute requiredRole="client">
                         <ClientDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
 
-                  <Route 
-                    path="/master-dashboard" 
+                  <Route
+                    path="/master-dashboard"
                     element={
                       <ProtectedRoute requiredRole="nailmaster">
                         <MasterDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
 
-                  <Route 
-                    path="/admin-dashboard" 
+                  <Route
+                    path="/admin-dashboard"
                     element={
                       <ProtectedRoute requiredRole="admin">
                         <AdminDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
 
+                  {/* public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
                   <Route path="/masters" element={<MastersPage />} />
                   <Route path="/master/:masterId" element={<MasterProfile />} />
                   <Route path="/designs" element={<DesignsPage />} />
                   <Route path="/designs/:id" element={<DesignPage />} />
                   <Route path="*" element={<NotFound />} />
-                  
+
+
                 </Routes>
                 <Toaster />
               </div>

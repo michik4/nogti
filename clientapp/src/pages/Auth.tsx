@@ -13,6 +13,9 @@ import { LoginRequest, RegisterRequest, AuthError, AuthFieldError } from "@/type
 import { ErrorDisplay } from "./auth/components/ErrorDisplay";
 import { FormField } from "./auth/components/FormField";
 import { parseAuthError, validateAuthForm, formatPhoneNumber } from "@/utils/error.util";
+import { useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -33,11 +36,19 @@ const Auth = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
+  const [redirectMessage, setRedirectMessage] = useState<string | null>(null);
   const { login, register } = useAuth();
   const { toast } = useToast();
 
   // Получаем путь, на который нужно перенаправить после входа
   const from = location.state?.from?.pathname || '/';
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const msg = params.get("message");
+    if (msg) setRedirectMessage(msg);
+    else setRedirectMessage(null);
+  }, [location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,6 +172,14 @@ const Auth = () => {
       </header>
 
       <div className="max-w-md mx-auto p-6">
+        {redirectMessage && (
+          <Alert className="mb-4 border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              {redirectMessage}
+            </AlertDescription>
+          </Alert>
+        )}
         <Card className="border-border">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl gradient-text">NailMasters</CardTitle>

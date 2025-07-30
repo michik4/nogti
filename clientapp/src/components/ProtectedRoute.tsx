@@ -22,7 +22,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Проверяем аутентификацию
   if (!authService.isAuthenticated()) {
     // Сохраняем текущий путь для редиректа после входа
-    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+    const params = new URLSearchParams({
+      message: 'Сначала войдите в систему',
+    });
+    return <Navigate to={`${redirectTo}?${params.toString()}`} state={{ from: location }} replace />;
   }
 
   // Проверяем роль, если требуется

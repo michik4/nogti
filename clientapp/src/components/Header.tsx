@@ -124,14 +124,28 @@ const Header = () => {
         });
       }
 
-      // Кнопка выхода
-      items.push({
-        icon: LogOut,
-        label: "Выйти",
-        path: "",
-        active: false,
-        action: handleLogout
-      });
+      // Проверяем, является ли пользователь гостем
+      const isGuestUser = ('type' in user && user.type === 'guest') || ('isGuest' in user && user.isGuest === true);
+      
+      if (isGuestUser) {
+        // Для гостевых пользователей показываем кнопку входа/регистрации
+        items.push({
+          icon: User,
+          label: "Войти/Регистрация",
+          path: "/auth",
+          active: location.pathname === "/auth",
+          action: () => navigate("/auth")
+        });
+      } else {
+        // Для авторизованных пользователей показываем кнопку выхода
+        items.push({
+          icon: LogOut,
+          label: "Выйти",
+          path: "",
+          active: false,
+          action: handleLogout
+        });
+      }
     }
 
     return items;
