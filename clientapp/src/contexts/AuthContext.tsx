@@ -254,8 +254,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(currentUser);
         // Удаляем гостевую сессию при успешной авторизации
         clearGuestSession();
+      } else {
+        // Если не удалось получить пользователя из токена, очищаем данные
+        console.error('Не удалось получить пользователя из токена после входа');
+        authService.logout();
+        throw new Error('Ошибка получения данных пользователя');
       }
     } catch (error) {
+      console.error('Ошибка при входе:', error);
+      // Очищаем данные при ошибке
+      authService.logout();
       throw error;
     } finally {
       setIsLoading(false);
@@ -276,8 +284,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(currentUser);
         // Удаляем гостевую сессию при успешной регистрации
         clearGuestSession();
+      } else {
+        // Если не удалось получить пользователя из токена, очищаем данные
+        console.error('Не удалось получить пользователя из токена после регистрации');
+        authService.logout();
+        throw new Error('Ошибка получения данных пользователя');
       }
     } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      // Очищаем данные при ошибке
+      authService.logout();
       throw error;
     } finally {
       setIsLoading(false);

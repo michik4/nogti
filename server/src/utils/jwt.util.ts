@@ -11,8 +11,18 @@ export class JwtUtil {
      * Создает access токен
      */
     static generateAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-        const jwtPayload = { ...payload };
-        return jwt.sign(jwtPayload, this.ACCESS_TOKEN_SECRET, {
+        // Очищаем payload от потенциально проблемных значений
+        const cleanPayload: Record<string, any> = { ...payload };
+        
+        // Убеждаемся, что все строковые значения корректно закодированы
+        Object.keys(cleanPayload).forEach(key => {
+            if (typeof cleanPayload[key] === 'string') {
+                // Убираем потенциально проблемные символы
+                cleanPayload[key] = (cleanPayload[key] as string).trim();
+            }
+        });
+        
+        return jwt.sign(cleanPayload, this.ACCESS_TOKEN_SECRET, {
             expiresIn: this.ACCESS_TOKEN_EXPIRY,
         } as jwt.SignOptions);
     }
@@ -21,8 +31,18 @@ export class JwtUtil {
      * Создает refresh токен
      */
     static generateRefreshToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-        const jwtPayload = { ...payload };
-        return jwt.sign(jwtPayload, this.REFRESH_TOKEN_SECRET, {
+        // Очищаем payload от потенциально проблемных значений
+        const cleanPayload: Record<string, any> = { ...payload };
+        
+        // Убеждаемся, что все строковые значения корректно закодированы
+        Object.keys(cleanPayload).forEach(key => {
+            if (typeof cleanPayload[key] === 'string') {
+                // Убираем потенциально проблемные символы
+                cleanPayload[key] = (cleanPayload[key] as string).trim();
+            }
+        });
+        
+        return jwt.sign(cleanPayload, this.REFRESH_TOKEN_SECRET, {
             expiresIn: this.REFRESH_TOKEN_EXPIRY,
         } as jwt.SignOptions);
     }

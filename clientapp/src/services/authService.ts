@@ -185,12 +185,34 @@ class AuthService {
         base64 += '='.repeat(4 - padding);
       }
 
-      // Декодируем payload
-      const payload = JSON.parse(atob(base64));
-      
-      // Удаляем устаревшее декодирование fullName из base64
-      // Теперь сервер передает fullName в правильной UTF-8 кодировке напрямую
-      
+      // Безопасное декодирование base64
+      let decodedPayload: string;
+      try {
+        decodedPayload = atob(base64);
+      } catch (base64Error) {
+        console.error('Ошибка декодирования base64:', base64Error);
+        // Попробуем альтернативный способ декодирования
+        try {
+          // Используем decodeURIComponent для обработки URL-безопасного base64
+          const urlSafeBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+          decodedPayload = atob(urlSafeBase64);
+        } catch (alternativeError) {
+          console.error('Альтернативное декодирование также не удалось:', alternativeError);
+          this.logout();
+          return null;
+        }
+      }
+
+      // Парсим JSON payload
+      let payload: JwtPayload;
+      try {
+        payload = JSON.parse(decodedPayload);
+      } catch (jsonError) {
+        console.error('Ошибка парсинга JSON из токена:', jsonError);
+        this.logout();
+        return null;
+      }
+
       return payload;
     } catch (error) {
       console.error('Ошибка декодирования токена:', error);
