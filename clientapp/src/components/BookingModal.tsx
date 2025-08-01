@@ -201,6 +201,8 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
               onDateSelect={setSelectedDate}
               onTimeSelect={setSelectedTime}
               disableWeekends={true}
+              masterId={masterId}
+              useMasterSchedule={true}
             />
 
             <Separator />

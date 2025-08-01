@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { MasterController } from '../controllers/master.controller';
+import { ScheduleController } from '../controllers/schedule.controller';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -112,5 +113,54 @@ router.delete('/services/:serviceId/designs/:designId', AuthMiddleware.authentic
  * Обновить информацию о дизайне в услуге
  */
 router.put('/services/:serviceId/designs/:designId', AuthMiddleware.authenticate, AuthMiddleware.requireRole('nailmaster'), MasterController.updateServiceDesign);
+
+// Роуты для расписания
+/**
+ * GET /api/masters/:masterId/schedule
+ * Получить расписание мастера
+ */
+router.get('/:masterId/schedule', ScheduleController.getMasterSchedule);
+
+/**
+ * GET /api/masters/schedule
+ * Получить расписание текущего мастера
+ */
+router.get('/schedule', AuthMiddleware.authenticate, AuthMiddleware.requireRole('nailmaster'), ScheduleController.getMySchedule);
+
+/**
+ * POST /api/masters/schedule
+ * Добавить временное окно для текущего мастера
+ */
+router.post('/schedule', AuthMiddleware.authenticate, AuthMiddleware.requireRole('nailmaster'), ScheduleController.addTimeSlot);
+
+/**
+ * PUT /api/masters/schedule/:slotId
+ * Обновить временное окно для текущего мастера
+ */
+router.put('/schedule/:slotId', AuthMiddleware.authenticate, AuthMiddleware.requireRole('nailmaster'), ScheduleController.updateTimeSlot);
+
+/**
+ * DELETE /api/masters/schedule/:slotId
+ * Удалить временное окно для текущего мастера
+ */
+router.delete('/schedule/:slotId', AuthMiddleware.authenticate, AuthMiddleware.requireRole('nailmaster'), ScheduleController.deleteTimeSlot);
+
+/**
+ * GET /api/masters/:masterId/schedule/available
+ * Получить доступные временные окна мастера для бронирования
+ */
+router.get('/:masterId/schedule/available', ScheduleController.getAvailableSlots);
+
+/**
+ * PUT /api/masters/:masterId/schedule/:slotId/block
+ * Заблокировать временное окно (для бронирования)
+ */
+router.put('/:masterId/schedule/:slotId/block', ScheduleController.blockTimeSlot);
+
+/**
+ * PUT /api/masters/:masterId/schedule/:slotId/unblock
+ * Разблокировать временное окно (отмена бронирования)
+ */
+router.put('/:masterId/schedule/:slotId/unblock', ScheduleController.unblockTimeSlot);
 
 export { router as mastersRoutes }; 

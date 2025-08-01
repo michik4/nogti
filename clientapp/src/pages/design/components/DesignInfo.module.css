@@ -52,6 +52,21 @@
   color: var(--foreground);
 }
 
+.noServicesInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--muted);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.noServicesText {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
 .colorInfo {
   display: flex;
   align-items: center;

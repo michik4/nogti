@@ -10,7 +10,8 @@ interface DesignInfoProps {
     image: string;
     category: string;
     difficulty?: string;
-    price: string;
+    price?: string;
+    minPrice?: number;
     duration: string;
     masterName: string;
     masterAvatar?: string;
@@ -54,7 +55,15 @@ const DesignInfo = ({ design }: DesignInfoProps) => {
           )}
         </div>
         <div className="flex items-center gap-4 mt-2">
-          <span className="font-bold text-primary">{design.price}</span>
+          {design.minPrice ? (
+            <span className="font-bold text-primary">от {new Intl.NumberFormat('ru-RU', {
+              style: 'currency',
+              currency: 'RUB',
+              minimumFractionDigits: 0
+            }).format(design.minPrice)}</span>
+          ) : design.price ? (
+            <span className="font-bold text-primary">{design.price}</span>
+          ) : null}
           <span className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
             {design.duration}

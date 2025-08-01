@@ -107,7 +107,7 @@ export class AuthController {
                 username: newUser.username,
                 role: newUser.role,
                 isGuest: newUser.isGuest,
-                fullName: (newUser as any).fullName ? Buffer.from((newUser as any).fullName, 'utf8').toString('base64') : undefined,
+                fullName: (newUser as any).fullName, // Убираем base64 кодирование - используем UTF-8
                 phone: (newUser as any).phone
             };
 
@@ -444,7 +444,7 @@ export class AuthController {
                 username: newAdmin.username,
                 role: newAdmin.role,
                 isGuest: newAdmin.isGuest,
-                fullName: newAdmin.fullName ? Buffer.from(newAdmin.fullName, 'utf8').toString('base64') : undefined,
+                fullName: newAdmin.fullName, // Убираем base64 кодирование - используем UTF-8
                 phone: newAdmin.phone
             };
 
@@ -486,8 +486,18 @@ export class AuthController {
      */
     static async getProfile(req: Request, res: Response): Promise<void> {
         try {
-            const userId = (req as any).user.userId;
-            const role = (req as any).user.role;
+            // Получаем userId из middleware - middleware устанавливает req.userId
+            const userId = (req as any).userId;
+            const role = (req as any).user?.role;
+
+            if (!userId) {
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'ID пользователя не найден в токене'
+                };
+                res.status(401).json(response);
+                return;
+            }
 
             let repository;
             switch (role) {

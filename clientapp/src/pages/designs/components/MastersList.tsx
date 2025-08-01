@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Star, MapPin, Clock, DollarSign, Phone, Mail, MessageCircle } from 'lucide-react';
+import { X, Star, MapPin, Clock, DollarSign, Phone, Mail, MessageCircle, AlertCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -135,10 +135,15 @@ export const MastersList: React.FC<MastersListProps> = ({
             />
             <div className={styles.designDetails}>
               <h4 className={styles.designTitle}>{design.title}</h4>
-              {design.estimatedPrice && (
+              {design.minPrice ? (
                 <p className={styles.designPrice}>
-                  Примерная стоимость: {formatPrice(design.estimatedPrice)}
+                  от {formatPrice(design.minPrice)}
                 </p>
+              ) : (
+                <div className="flex items-center gap-2 text-amber-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Нет услуг с этим дизайном</span>
+                </div>
               )}
               {design.description && (
                 <p className={styles.designDescription}>
@@ -182,10 +187,16 @@ export const MastersList: React.FC<MastersListProps> = ({
 
             {!isLoading && !error && masters.length === 0 && (
               <div className={styles.emptyState}>
-                <p>Пока нет мастеров, которые могут выполнить этот дизайн</p>
-                <Button onClick={onClose} variant="outline">
-                  Закрыть
-                </Button>
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <AlertCircle className="w-8 h-8 text-amber-500" />
+                  <h3 className="text-lg font-semibold">Пока нет мастеров</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Мастера еще не добавили этот дизайн к своим услугам
+                  </p>
+                  <Button onClick={onClose} variant="outline">
+                    Закрыть
+                  </Button>
+                </div>
               </div>
             )}
 

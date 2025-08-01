@@ -15,6 +15,7 @@ import DesignInfo from './components/DesignInfo';
 import DesignActions from './components/DesignActions';
 import MasterInfo from './components/MasterInfo';
 import styles from './design.page.module.css';
+import { AlertCircle } from 'lucide-react';
 
 const DesignPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -197,8 +198,20 @@ const DesignPage: React.FC = () => {
                         )}
                         <DesignInfo design={designData} />
                         <DesignActions design={designData} />
-                        {mastersData?.data && mastersData.data.length > 0 && (
+                        {mastersData?.data && mastersData.data.length > 0 ? (
                             <MasterInfo masters={mastersData.data} designId={designData.id} />
+                        ) : (
+                            <Card className="mt-4">
+                                <CardContent className="p-6 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <AlertCircle className="w-8 h-8 text-amber-500" />
+                                        <h3 className="text-lg font-semibold">Пока нет мастеров</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Мастера еще не добавили этот дизайн к своим услугам
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         )}
                     </div>
                 </div>

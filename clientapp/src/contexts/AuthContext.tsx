@@ -86,6 +86,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } catch (error) {
           console.error('Ошибка загрузки профиля с сервера:', error);
           
+          // Проверяем, не истек ли токен
+          if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+            console.warn('Токен истек или недействителен, очищаем');
+            authService.logout();
+            checkGuestSession();
+            return;
+          }
+          
           // FALLBACK: Только если сервер недоступен, используем данные из токена
           // Но предупреждаем о возможных проблемах с кодировкой
           try {
@@ -453,6 +461,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Проверки ролей и типов
   const isAuthenticated = useMemo(() => {
     try {
+      // Если у нас есть пользователь, считаем что аутентификация есть
+      if (user) {
+        return true;
+      }
+      // Иначе проверяем токен
       return authService.isAuthenticated();
     } catch (error) {
       console.error('Ошибка проверки аутентификации в контексте:', error);

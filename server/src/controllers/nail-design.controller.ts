@@ -12,6 +12,43 @@ import { MasterServiceDesignEntity } from '../entities/master-service-design.ent
 
 export class NailDesignController {
     /**
+     * Получить минимальную цену дизайна на основе связанных услуг
+     */
+    private static async getDesignMinPrice(designId: string): Promise<number | null> {
+        try {
+            const masterServiceDesignRepository = AppDataSource.getRepository(MasterServiceDesignEntity);
+            
+            const result = await masterServiceDesignRepository
+                .createQueryBuilder('msd')
+                .leftJoinAndSelect('msd.masterService', 'service')
+                .where('msd.nailDesign.id = :designId', { designId })
+                .andWhere('msd.isActive = :isActive', { isActive: true })
+                .andWhere('service.isActive = :serviceActive', { serviceActive: true })
+                .select('MIN(COALESCE(msd.customPrice, service.price))', 'minPrice')
+                .getRawOne();
+
+            return result?.minPrice ? parseFloat(result.minPrice) : null;
+        } catch (error) {
+            console.error('Ошибка получения минимальной цены дизайна:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Получить минимальную цену для массива дизайнов
+     */
+    private static async getDesignsMinPrices(designs: NailDesignEntity[]): Promise<Map<string, number | null>> {
+        const pricesMap = new Map<string, number | null>();
+        
+        for (const design of designs) {
+            const minPrice = await NailDesignController.getDesignMinPrice(design.id);
+            pricesMap.set(design.id, minPrice);
+        }
+        
+        return pricesMap;
+    }
+
+    /**
      * Получить список дизайнов с пагинацией и фильтрами
      */
     static async getDesigns(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -75,9 +112,18 @@ export class NailDesignController {
                 .take(limit)
                 .getManyAndCount();
 
-            const response: PaginatedResponse<NailDesignEntity> = {
+            // Получаем минимальные цены для всех дизайнов
+            const minPrices = await NailDesignController.getDesignsMinPrices(designs);
+
+            // Добавляем минимальную цену к каждому дизайну
+            const designsWithPrices = designs.map(design => ({
+                ...design,
+                minPrice: minPrices.get(design.id)
+            }));
+
+            const response: PaginatedResponse<any> = {
                 success: true,
-                data: designs,
+                data: designsWithPrices,
                 pagination: {
                     page,
                     limit,
@@ -119,9 +165,17 @@ export class NailDesignController {
                 return;
             }
 
-            const response: ApiResponse<NailDesignEntity> = {
+            // Получаем минимальную цену для дизайна
+            const minPrice = await NailDesignController.getDesignMinPrice(design.id);
+
+            const designWithPrice = {
+                ...design,
+                minPrice
+            };
+
+            const response: ApiResponse<any> = {
                 success: true,
-                data: design
+                data: designWithPrice
             };
 
             res.json(response);
@@ -226,8 +280,7 @@ export class NailDesignController {
                 videoUrl,
                 type = DesignType.BASIC,
                 tags,
-                color,
-                estimatedPrice
+                color
             } = req.body;
 
             if (!title || !imageUrl) {
@@ -249,7 +302,6 @@ export class NailDesignController {
             design.type = type;
             design.tags = tags;
             design.color = color;
-            design.estimatedPrice = estimatedPrice;
             design.isModerated = false; // Требует модерации
 
             // Устанавливаем источник и автора в зависимости от роли
@@ -536,9 +588,18 @@ export class NailDesignController {
 
             const [designs, total] = await queryBuilder.getManyAndCount();
 
-            const response: PaginatedResponse<NailDesignEntity> = {
+            // Получаем минимальные цены для всех дизайнов
+            const minPrices = await NailDesignController.getDesignsMinPrices(designs);
+
+            // Добавляем минимальную цену к каждому дизайну
+            const designsWithPrices = designs.map(design => ({
+                ...design,
+                minPrice: minPrices.get(design.id)
+            }));
+
+            const response: PaginatedResponse<any> = {
                 success: true,
-                data: designs,
+                data: designsWithPrices,
                 pagination: {
                     page: pageNum,
                     limit: limitNum,
@@ -612,7 +673,6 @@ export class NailDesignController {
             if (updateData.videoUrl !== undefined) design.videoUrl = updateData.videoUrl;
             if (updateData.tags) design.tags = updateData.tags;
             if (updateData.color) design.color = updateData.color;
-            if (updateData.estimatedPrice !== undefined) design.estimatedPrice = updateData.estimatedPrice;
             
             // Только админ может менять тип и активность
             if (isAdmin) {
@@ -721,9 +781,18 @@ export class NailDesignController {
                 relations: ['uploadedByClient', 'uploadedByAdmin'] // Добавляем связи для получения информации о мастере
             });
 
-            const response: ApiResponse<NailDesignEntity[]> = {
+            // Получаем минимальные цены для всех дизайнов
+            const minPrices = await NailDesignController.getDesignsMinPrices(designs);
+
+            // Добавляем минимальную цену к каждому дизайну
+            const designsWithPrices = designs.map(design => ({
+                ...design,
+                minPrice: minPrices.get(design.id)
+            }));
+
+            const response: ApiResponse<any[]> = {
                 success: true,
-                data: designs
+                data: designsWithPrices
             };
             
             res.json(response);
@@ -802,9 +871,18 @@ export class NailDesignController {
                 }
             });
 
+            // Получаем минимальные цены для всех дизайнов
+            const minPrices = await NailDesignController.getDesignsMinPrices(allDesigns);
+
+            // Добавляем минимальную цену к каждому дизайну
+            const designsWithPrices = allDesigns.map(design => ({
+                ...design,
+                minPrice: minPrices.get(design.id)
+            }));
+
             res.json({
                 success: true,
-                data: allDesigns,
+                data: designsWithPrices,
                 error: undefined
             } as ApiResponse);
         } catch (error) {
@@ -849,9 +927,18 @@ export class NailDesignController {
 
             const total = client.likedNailDesigns.filter(design => design.isActive && design.isModerated).length;
 
-            const response: PaginatedResponse<NailDesignEntity> = {
+            // Получаем минимальные цены для всех дизайнов
+            const minPrices = await NailDesignController.getDesignsMinPrices(likedDesigns);
+
+            // Добавляем минимальную цену к каждому дизайну
+            const designsWithPrices = likedDesigns.map(design => ({
+                ...design,
+                minPrice: minPrices.get(design.id)
+            }));
+
+            const response: PaginatedResponse<any> = {
                 success: true,
-                data: likedDesigns,
+                data: designsWithPrices,
                 pagination: {
                     page,
                     limit,

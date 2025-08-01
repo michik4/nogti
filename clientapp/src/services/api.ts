@@ -18,6 +18,41 @@ class ApiService {
   }
 
   /**
+   * Проверка актуальности токена
+   */
+  private isTokenValid(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      // Разбиваем токен на части
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('Неверный формат токена');
+        return false;
+      }
+
+      // Безопасное декодирование base64 с поддержкой URL-безопасных символов
+      let base64 = parts[1];
+      const padding = base64.length % 4;
+      if (padding) {
+        base64 += '='.repeat(4 - padding);
+      }
+
+      // Заменяем URL-безопасные символы на стандартные base64
+      const urlSafeBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Декодируем токен для проверки времени истечения
+      const payload = JSON.parse(atob(urlSafeBase64));
+      const currentTime = Date.now() / 1000;
+      return payload.exp > currentTime;
+    } catch (error) {
+      console.error('Ошибка проверки токена:', error);
+      return false;
+    }
+  }
+
+  /**
    * Корневой метод для выполнения запросов с логированием
    * @param endpoint - URL-адрес запроса
    * @param method - метод запроса
@@ -25,6 +60,14 @@ class ApiService {
    * @returns ответ от сервера
    */
   async makeRequest<T>(endpoint: string, method: string, data?: any): Promise<ApiResponse<T>> {
+    // Проверяем актуальность токена перед запросом (кроме auth endpoints)
+    if (!endpoint.startsWith('/auth/') && this.getToken() && !this.isTokenValid()) {
+      console.warn('Токен истек, очищаем и перенаправляем на вход');
+      this.clearTokens();
+      window.location.href = '/auth';
+      throw new Error('Сессия истекла. Необходимо войти заново.');
+    }
+
     const isFormData = data instanceof FormData;
     const headers = this.getHeaders(true, isFormData);
     let body: BodyInit | undefined = undefined;

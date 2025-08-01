@@ -17,8 +17,33 @@ export class JwtUtil {
         // Убеждаемся, что все строковые значения корректно закодированы
         Object.keys(cleanPayload).forEach(key => {
             if (typeof cleanPayload[key] === 'string') {
-                // Убираем потенциально проблемные символы
-                cleanPayload[key] = (cleanPayload[key] as string).trim();
+                // Нормализуем UTF-8 строки и убираем проблемные символы
+                let value = (cleanPayload[key] as string).trim();
+                
+                // Проверяем, что строка содержит только валидные UTF-8 символы
+                if (value && !/^\s*$/.test(value)) {
+                    // Нормализуем Unicode символы
+                    value = value.normalize('NFC');
+                    
+                    // Проверяем, что строка не содержит некорректных символов
+                    try {
+                        // Пробуем закодировать и декодировать для проверки валидности
+                        const testEncoding = encodeURIComponent(value);
+                        const testDecoding = decodeURIComponent(testEncoding);
+                        
+                        if (testDecoding === value) {
+                            cleanPayload[key] = value;
+                        } else {
+                            console.warn(`Некорректные символы в поле ${key}, очищаем`);
+                            cleanPayload[key] = undefined;
+                        }
+                    } catch (error) {
+                        console.warn(`Ошибка кодирования поля ${key}:`, error);
+                        cleanPayload[key] = undefined;
+                    }
+                } else {
+                    cleanPayload[key] = undefined;
+                }
             }
         });
         
@@ -37,8 +62,33 @@ export class JwtUtil {
         // Убеждаемся, что все строковые значения корректно закодированы
         Object.keys(cleanPayload).forEach(key => {
             if (typeof cleanPayload[key] === 'string') {
-                // Убираем потенциально проблемные символы
-                cleanPayload[key] = (cleanPayload[key] as string).trim();
+                // Нормализуем UTF-8 строки и убираем проблемные символы
+                let value = (cleanPayload[key] as string).trim();
+                
+                // Проверяем, что строка содержит только валидные UTF-8 символы
+                if (value && !/^\s*$/.test(value)) {
+                    // Нормализуем Unicode символы
+                    value = value.normalize('NFC');
+                    
+                    // Проверяем, что строка не содержит некорректных символов
+                    try {
+                        // Пробуем закодировать и декодировать для проверки валидности
+                        const testEncoding = encodeURIComponent(value);
+                        const testDecoding = decodeURIComponent(testEncoding);
+                        
+                        if (testDecoding === value) {
+                            cleanPayload[key] = value;
+                        } else {
+                            console.warn(`Некорректные символы в поле ${key}, очищаем`);
+                            cleanPayload[key] = undefined;
+                        }
+                    } catch (error) {
+                        console.warn(`Ошибка кодирования поля ${key}:`, error);
+                        cleanPayload[key] = undefined;
+                    }
+                } else {
+                    cleanPayload[key] = undefined;
+                }
             }
         });
         

@@ -128,10 +128,16 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
               </div>
 
               {/* Цена, если есть - скрывается при наведении */}
-              {design.estimatedPrice && (
+              {design.minPrice ? (
                 <div className="absolute top-2 left-2 group-hover:opacity-0 transition-opacity">
                   <Badge variant="outline" className="text-xs bg-white/90 text-black">
-                    {design.estimatedPrice}₽
+                    от {design.minPrice}₽
+                  </Badge>
+                </div>
+              ) : (
+                <div className="absolute top-2 left-2 group-hover:opacity-0 transition-opacity">
+                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 border-amber-300">
+                    Нет услуг
                   </Badge>
                 </div>
               )}

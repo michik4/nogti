@@ -33,7 +33,6 @@ interface CreateDesignData {
   type: 'basic' | 'designer';
   tags: string[];
   color?: string;
-  estimatedPrice?: number;
 }
 
 const popularTags = [
@@ -56,8 +55,7 @@ const AddDesignModal = ({
     videoUrl: '',
     type: 'basic',
     tags: [],
-    color: '',
-    estimatedPrice: 0
+    color: ''
   });
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -72,11 +70,7 @@ const AddDesignModal = ({
   
   // Устанавливаем цену по умолчанию при изменении услуги
   React.useEffect(() => {
-    if (selectedServiceData) {
-      setFormData(prev => ({ ...prev, estimatedPrice: selectedServiceData.price }));
-    } else {
-      setFormData(prev => ({ ...prev, estimatedPrice: 0 }));
-    }
+    // Больше не нужно устанавливать цену, так как она будет рассчитываться от услуг
   }, [selectedServiceData]);
 
   const handleInputChange = (field: keyof CreateDesignData, value: any) => {
@@ -145,8 +139,7 @@ const AddDesignModal = ({
         videoUrl: '',
         type: 'basic',
         tags: [],
-        color: '',
-        estimatedPrice: 0
+        color: ''
       });
       handleClearImage();
       
@@ -403,36 +396,15 @@ const AddDesignModal = ({
             />
           </div>
 
-          {/* Цена и цвет */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="estimatedPrice">Примерная стоимость (₽)</Label>
-              <Input
-                id="estimatedPrice"
-                type="number"
-                min="0"
-                step="50"
-                placeholder={selectedServiceData ? `${selectedServiceData.price}` : '0'}
-                value={formData.estimatedPrice || ''}
-                onChange={(e) => handleInputChange('estimatedPrice', e.target.value ? Number(e.target.value) : undefined)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {selectedServiceData 
-                  ? `По умолчанию: ${selectedServiceData.price}₽ (цена услуги "${selectedServiceData.name}")` 
-                  : 'Укажите примерную стоимость дизайна'
-                }
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="color">Основной цвет</Label>
-              <Input
-                id="color"
-                placeholder="Например: розовый, нюд, черный"
-                value={formData.color}
-                onChange={(e) => handleInputChange('color', e.target.value)}
-              />
-            </div>
+          {/* Цвет */}
+          <div className="space-y-2">
+            <Label htmlFor="color">Основной цвет</Label>
+            <Input
+              id="color"
+              placeholder="Например: розовый, нюд, черный"
+              value={formData.color}
+              onChange={(e) => handleInputChange('color', e.target.value)}
+            />
           </div>
 
           {/* Видео (опционально) */}

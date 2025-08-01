@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Settings, Calendar, Star, Plus, Users, TrendingUp, Clock, DollarSign, Upload, Heart, Play, CheckCircle, XCircle, Eye, Palette, Search, Edit2 } from "lucide-react";
+import { ArrowLeft, Edit, Settings, Calendar, Star, Plus, Users, TrendingUp, Clock, DollarSign, Upload, Heart, Play, CheckCircle, XCircle, Eye, Palette, Search, Edit2, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,7 @@ import { designService, NailDesign } from "@/services/designService";
 import MasterOrdersTab from "./components/MasterOrdersTab";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import { getImageUrl } from "@/utils/image.util";
+import ScheduleManager from "@/components/ScheduleManager";
 
 const MasterDashboard = () => {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ const MasterDashboard = () => {
   const [selectedService, setSelectedService] = useState<MasterService | null>(null);
   const [selectedServiceDesign, setSelectedServiceDesign] = useState<MasterServiceDesign | null>(null);
   const [serviceDesigns, setServiceDesigns] = useState<{ [serviceId: string]: MasterServiceDesign[] }>({});
+  const [isScheduleManagerOpen, setIsScheduleManagerOpen] = useState(false);
   
   useEffect(() => {
     if (isAuthLoading) return;
@@ -112,7 +114,7 @@ const MasterDashboard = () => {
             id: design.id,
             nailDesign: design,
             isActive: design.isActive,
-            customPrice: design.estimatedPrice || 0,
+            customPrice: design.minPrice || 0,
             estimatedDuration: 60, // значение по умолчанию
             addedAt: design.createdAt
           }));
@@ -306,7 +308,7 @@ const MasterDashboard = () => {
                 toast.error('Услуга не найдена');
                 return;
             }
-            const finalPrice = designData.estimatedPrice || selectedServiceData.price;
+            const finalPrice = designData.minPrice || selectedServiceData.price;
             
             try {
                 console.log('Добавляем дизайн к услуге:', {
@@ -466,7 +468,7 @@ const MasterDashboard = () => {
           id: design.id,
           nailDesign: design,
           isActive: design.isActive,
-          customPrice: design.estimatedPrice || 0,
+          customPrice: design.minPrice || 0,
           estimatedDuration: 60, // значение по умолчанию
           addedAt: design.createdAt
         }));
@@ -545,6 +547,14 @@ const MasterDashboard = () => {
                 <Button variant="outline" className="w-full mb-2" onClick={handleEditProfile}>
                   <Edit className="w-4 h-4 mr-2" />
                   Редактировать профиль
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full mb-2" 
+                  onClick={() => setIsScheduleManagerOpen(true)}
+                >
+                  <CalendarDays className="w-4 h-4 mr-2" />
+                  Управление расписанием
                 </Button>
                 <Button 
                   variant="secondary" 
@@ -818,7 +828,7 @@ const MasterDashboard = () => {
                         
                         <div className="flex justify-between text-sm mb-3">
                           <span className="font-semibold text-primary">
-                            {design.customPrice || design.nailDesign?.estimatedPrice || 0}₽
+                            {design.customPrice || design.nailDesign?.minPrice || 0}₽
                           </span>
                           <span className="text-muted-foreground">{design.estimatedDuration || 0} мин</span>
                         </div>
@@ -908,6 +918,11 @@ const MasterDashboard = () => {
           baseServicePrice={selectedService.price}
         />
       )}
+
+      <ScheduleManager
+        isOpen={isScheduleManagerOpen}
+        onClose={() => setIsScheduleManagerOpen(false)}
+      />
     </div>
   );
 };

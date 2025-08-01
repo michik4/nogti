@@ -53,9 +53,6 @@ export class NailDesignEntity {
     @Column({ type: 'varchar', length: 100, nullable: true })
     color?: string;
 
-    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-    estimatedPrice?: number;
-
     @Column({ type: 'int', default: 0 })
     likesCount!: number;
 

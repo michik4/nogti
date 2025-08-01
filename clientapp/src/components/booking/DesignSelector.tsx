@@ -140,7 +140,7 @@ const DesignSelector = ({ serviceId, selectedDesignId, onDesignSelect }: DesignS
                   <Badge variant="secondary" className="text-xs">
                     {serviceDesign.nailDesign.type === "basic" ? "Базовый" : "Дизайнерский"}
                   </Badge>
-                  <span>{serviceDesign.nailDesign.estimatedPrice}₽</span>
+                  <span>{serviceDesign.nailDesign.minPrice ? `от ${serviceDesign.nailDesign.minPrice}₽` : 'Нет услуг'}</span>
                 </div>
 
                 {serviceDesign.customPrice && (

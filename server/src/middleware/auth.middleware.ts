@@ -33,9 +33,21 @@ export class AuthMiddleware {
             console.log('- Decoded payload:', decoded);
             
             if (!decoded) {
+                console.error('[AuthMiddleware] Токен недействителен');
                 const response: ApiResponse = {
                     success: false,
                     error: 'Недействительный токен'
+                };
+                res.status(401).json(response);
+                return;
+            }
+
+            // Проверяем обязательные поля в токене
+            if (!decoded.userId || !decoded.email || !decoded.role) {
+                console.error('[AuthMiddleware] Токен не содержит обязательные поля:', decoded);
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'Неполный токен'
                 };
                 res.status(401).json(response);
                 return;
@@ -50,6 +62,7 @@ export class AuthMiddleware {
             console.log('- User from DB:', user ? { id: user.id, email: user.email, role: user.role } : 'NOT FOUND');
 
             if (!user) {
+                console.error('[AuthMiddleware] Пользователь не найден в БД:', decoded.userId);
                 const response: ApiResponse = {
                     success: false,
                     error: 'Пользователь не найден'
@@ -58,11 +71,38 @@ export class AuthMiddleware {
                 return;
             }
 
+            // Проверяем соответствие данных в токене и БД
+            if (user.email !== decoded.email || user.role !== decoded.role) {
+                console.error('[AuthMiddleware] Несоответствие данных токена и БД:', {
+                    tokenEmail: decoded.email,
+                    dbEmail: user.email,
+                    tokenRole: decoded.role,
+                    dbRole: user.role
+                });
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'Данные токена не соответствуют пользователю'
+                };
+                res.status(401).json(response);
+                return;
+            }
+
             req.user = user;
             req.userId = user.id;
             
+            // Также устанавливаем данные в req для совместимости
+            (req as any).user = {
+                userId: user.id,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                fullName: (user as any).fullName,
+                phone: (user as any).phone
+            };
+            
             console.log('- Установленный req.userId:', req.userId);
             console.log('- Тип req.userId:', typeof req.userId);
+            console.log('- Установленные данные пользователя:', (req as any).user);
             
             next();
         } catch (error) {

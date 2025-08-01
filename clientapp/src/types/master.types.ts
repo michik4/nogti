@@ -27,7 +27,7 @@ export interface MasterServiceDesign {
     isModerated: boolean;
     likesCount: number;
     ordersCount: number;
-    estimatedPrice?: number;
+    minPrice?: number; // Минимальная цена от связанных услуг
     createdAt?: string;
   };
   createdAt: string;
@@ -131,7 +131,7 @@ export interface MasterDesign {
     title: string;
     imageUrl: string;
     description?: string;
-    estimatedPrice?: number;
+    minPrice?: number; // Минимальная цена от связанных услуг
     type: 'basic' | 'designer';
     tags?: string[];
     isActive: boolean;

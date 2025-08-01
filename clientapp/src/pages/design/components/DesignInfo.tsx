@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, DollarSign, Heart, BookOpen, Calendar } from 'lucide-react';
+import { Clock, DollarSign, Heart, BookOpen, Calendar, AlertCircle } from 'lucide-react';
 import { NailDesign } from '@/services/designService';
 import { getColorHex } from '@/utils/color.util';
 import styles from './DesignInfo.module.css';
@@ -52,11 +52,18 @@ const DesignInfo: React.FC<DesignInfoProps> = ({ design }) => {
           </div>
         </div>
 
-        {design.estimatedPrice && (
+        {design.minPrice ? (
           <div className={styles.priceInfo}>
             <DollarSign className="w-4 h-4 text-green-500" />
             <span className={styles.price}>
-              Примерная стоимость: {formatPrice(design.estimatedPrice)}
+              от {formatPrice(design.minPrice)}
+            </span>
+          </div>
+        ) : (
+          <div className={styles.noServicesInfo}>
+            <AlertCircle className="w-4 h-4 text-amber-500" />
+            <span className={styles.noServicesText}>
+              Пока нет услуг с этим дизайном
             </span>
           </div>
         )}

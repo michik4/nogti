@@ -184,7 +184,7 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
                     <span>{master.location || master.address}</span>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3">
                     {canBook && (
                       <Button
                         className="gradient-bg text-white relative z-10"

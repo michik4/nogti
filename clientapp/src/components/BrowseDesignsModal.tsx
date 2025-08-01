@@ -201,7 +201,7 @@ const BrowseDesignsModal = ({
                         ❤️ {design.likesCount} 📋 {design.ordersCount}
                       </span>
                       <span className="font-semibold text-primary">
-                        {design.estimatedPrice ? `${design.estimatedPrice}₽` : `${servicePrice}₽`}
+                        {design.minPrice ? `от ${design.minPrice}₽` : "Нет услуг"}
                       </span>
                     </div>
                   </div>

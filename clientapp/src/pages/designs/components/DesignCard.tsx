@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Eye, Users, DollarSign, Tag } from 'lucide-react';
+import { Heart, Eye, Users, DollarSign, Tag, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -105,10 +105,15 @@ export const DesignCard: React.FC<DesignCardProps> = ({
       <CardContent className={styles.content}>
         <div className={styles.header}>
           <h3 className={styles.title}>{design.title}</h3>
-          {design.estimatedPrice && (
+          {design.minPrice ? (
             <span className={styles.price}>
-              {formatPrice(design.estimatedPrice)}
+              от {formatPrice(design.minPrice)}
             </span>
+          ) : (
+            <div className={styles.noServicesInfo}>
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <span className={styles.noServicesText}>Нет услуг</span>
+            </div>
           )}
         </div>
 

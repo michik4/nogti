@@ -1,9 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { scheduleService } from "@/services/scheduleService";
+import { TimeSlot } from "@/types/schedule.types";
 
 interface DateTimeSelectorProps {
   selectedDate: Date | undefined;
@@ -11,6 +13,8 @@ interface DateTimeSelectorProps {
   onDateSelect: (date: Date | undefined) => void;
   onTimeSelect: (time: string) => void;
   disableWeekends?: boolean;
+  masterId?: string;
+  useMasterSchedule?: boolean;
 }
 
 /**
@@ -22,12 +26,44 @@ const DateTimeSelector = ({
   selectedTime,
   onDateSelect,
   onTimeSelect,
-  disableWeekends = false
+  disableWeekends = false,
+  masterId,
+  useMasterSchedule = false
 }: DateTimeSelectorProps) => {
-  const timeSlots = [
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+  const defaultTimeSlots = [
     "09:00", "10:00", "11:00", "12:00", "13:00", 
     "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
   ];
+
+  // Загружаем доступные временные окна мастера
+  useEffect(() => {
+    if (useMasterSchedule && masterId && selectedDate) {
+      loadAvailableSlots();
+    }
+  }, [selectedDate, masterId, useMasterSchedule]);
+
+  const loadAvailableSlots = async () => {
+    if (!masterId || !selectedDate) return;
+
+    try {
+      setIsLoadingSlots(true);
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      const slots = await scheduleService.getAvailableSlots(masterId, dateStr);
+      setAvailableSlots(slots);
+    } catch (error) {
+      console.error('Ошибка загрузки доступных окон:', error);
+      setAvailableSlots([]);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
+
+  const timeSlots = useMasterSchedule && availableSlots.length > 0 
+    ? availableSlots.map(slot => slot.startTime)
+    : defaultTimeSlots;
 
   return (
     <div className="space-y-6">
@@ -53,18 +89,34 @@ const DateTimeSelector = ({
 
       {/* Time Selection */}
       <div>
-        <Label className="text-base font-semibold">Выберите время *</Label>
+        <Label className="text-base font-semibold">
+          Выберите время *
+          {useMasterSchedule && isLoadingSlots && (
+            <span className="text-sm text-muted-foreground ml-2">(загрузка...)</span>
+          )}
+        </Label>
         <div className="grid grid-cols-3 gap-2 mt-2">
-          {timeSlots.map((time) => (
-            <Button
-              key={time}
-              variant={selectedTime === time ? "default" : "outline"}
-              size="sm"
-              onClick={() => onTimeSelect(time)}
-            >
-              {time}
-            </Button>
-          ))}
+          {isLoadingSlots ? (
+            <div className="col-span-3 text-center py-4 text-muted-foreground">
+              Загрузка доступных окон...
+            </div>
+          ) : timeSlots.length > 0 ? (
+            timeSlots.map((time) => (
+              <Button
+                key={time}
+                variant={selectedTime === time ? "default" : "outline"}
+                size="sm"
+                onClick={() => onTimeSelect(time)}
+                disabled={isLoadingSlots}
+              >
+                {time}
+              </Button>
+            ))
+          ) : useMasterSchedule ? (
+            <div className="col-span-3 text-center py-4 text-muted-foreground">
+              Нет доступных временных окон на эту дату
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

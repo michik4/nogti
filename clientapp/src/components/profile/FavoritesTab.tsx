@@ -226,9 +226,9 @@ const FavoritesTab = ({ onBookAgain }: FavoritesTabProps) => {
                   <p className="text-xs text-muted-foreground">
                     {design.type === 'designer' ? 'Дизайнерский' : 'Базовый'}
                   </p>
-                  {design.estimatedPrice && (
+                  {design.minPrice && (
                     <p className="text-xs font-semibold text-primary">
-                      от {design.estimatedPrice} ₽
+                      от {design.minPrice} ₽
                     </p>
                   )}
                   <div className="flex items-center gap-1 mt-1">
@@ -247,7 +247,7 @@ const FavoritesTab = ({ onBookAgain }: FavoritesTabProps) => {
             <p className="text-muted-foreground mb-4">
               У вас пока нет избранных дизайнов
             </p>
-            <Button onClick={() => navigate("/")} variant="outline">
+            <Button onClick={() => navigate("/designs")} variant="outline">
               Найти дизайны
             </Button>
           </div>

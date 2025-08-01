@@ -112,6 +112,20 @@
   white-space: nowrap;
 }
 
+.noServicesInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+.noServicesText {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+}
+
 .description {
   color: hsl(var(--muted-foreground));
   font-size: 0.85rem;

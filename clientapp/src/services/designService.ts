@@ -21,7 +21,7 @@ export interface NailDesign {
   source: 'admin' | 'client' | 'master';
   tags?: string[];
   color?: string;
-  estimatedPrice?: number;
+  minPrice?: number; // Минимальная цена от связанных услуг
   likesCount: number;
   ordersCount: number;
   isActive: boolean;
@@ -94,7 +94,6 @@ export const designService = {
     type: 'basic' | 'designer';
     tags: string[];
     color?: string;
-    estimatedPrice?: number;
   }): Promise<ApiResponse<NailDesign>> {
     return apiService.post<NailDesign>('/designs', data);
   },

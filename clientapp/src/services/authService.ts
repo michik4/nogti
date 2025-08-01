@@ -185,17 +185,17 @@ class AuthService {
         base64 += '='.repeat(4 - padding);
       }
 
-      // Безопасное декодирование base64
+      // Безопасное декодирование base64 с поддержкой UTF-8
       let decodedPayload: string;
       try {
-        decodedPayload = atob(base64);
+        // Используем decodeURIComponent для корректной обработки UTF-8 символов
+        const urlSafeBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+        decodedPayload = atob(urlSafeBase64);
       } catch (base64Error) {
         console.error('Ошибка декодирования base64:', base64Error);
         // Попробуем альтернативный способ декодирования
         try {
-          // Используем decodeURIComponent для обработки URL-безопасного base64
-          const urlSafeBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
-          decodedPayload = atob(urlSafeBase64);
+          decodedPayload = atob(base64);
         } catch (alternativeError) {
           console.error('Альтернативное декодирование также не удалось:', alternativeError);
           this.logout();
@@ -211,6 +211,28 @@ class AuthService {
         console.error('Ошибка парсинга JSON из токена:', jsonError);
         this.logout();
         return null;
+      }
+
+      // Проверяем и нормализуем строковые поля для корректной работы с UTF-8
+      if (payload.fullName && typeof payload.fullName === 'string') {
+        // Убеждаемся, что fullName корректно декодирован
+        try {
+          // Проверяем, что строка не содержит некорректных символов
+          // Используем более точную проверку для UTF-8 символов
+          const testString = payload.fullName;
+          const isValidUTF8 = /^[\u0000-\u007F\u0080-\uFFFF]*$/.test(testString);
+          
+          if (!isValidUTF8) {
+            console.warn('Обнаружены некорректные символы в fullName, очищаем');
+            payload.fullName = undefined;
+          } else {
+            // Нормализуем Unicode символы
+            payload.fullName = testString.normalize('NFC');
+          }
+        } catch (error) {
+          console.warn('Ошибка обработки fullName:', error);
+          payload.fullName = undefined;
+        }
       }
 
       return payload;
