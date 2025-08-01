@@ -36,7 +36,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     return `${mins}м`;
   };
 
-  const isPriceChanged = service.customPrice && service.customPrice !== service.basePrice;
+  const hasCustomPrice = service.customPrice && service.customPrice > 0;
+  const hasAdditionalDuration = service.additionalDuration && service.additionalDuration > 0;
 
   return (
     <div className={styles.serviceCard}>
@@ -63,27 +64,29 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               <span className={styles.currentPrice}>
                 {formatPrice(service.totalPrice)}
               </span>
-              {isPriceChanged && (
-                <span className={styles.basePrice}>
-                  от {formatPrice(service.basePrice)}
-                </span>
-              )}
+              <span className={styles.basePrice}>
+                базовая цена: {formatPrice(service.basePrice)}
+              </span>
             </div>
           </div>
-          {isPriceChanged && (
-            <Badge variant="outline" className={styles.customPriceBadge}>
-              <Sparkles className="w-3 h-3" />
-              Специальная цена
-            </Badge>
+          
+          {/* Дополнительная стоимость за дизайн */}
+          {hasCustomPrice && (
+            <div className={styles.additionalCost}>
+              <Badge variant="outline" className={styles.customPriceBadge}>
+                <Sparkles className="w-3 h-3" />
+                +{formatPrice(service.customPrice)} за дизайн
+              </Badge>
+            </div>
           )}
         </div>
 
         <div className={styles.durationInfo}>
           <Clock className="w-4 h-4 text-blue-600" />
           <span>{formatDuration(service.totalDuration)}</span>
-          {service.additionalDuration && service.additionalDuration > 0 && (
+          {hasAdditionalDuration && (
             <span className={styles.additionalTime}>
-              (+{formatDuration(service.additionalDuration)})
+              (+{formatDuration(service.additionalDuration)} за дизайн)
             </span>
           )}
         </div>
@@ -98,14 +101,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
       {showBookingButton && service.isActive && (
         <div className={styles.actions}>
-          <Button
+          <Button 
             onClick={() => onBooking(service.id, service.name)}
             className={styles.bookingButton}
             size="sm"
           >
-            <Calendar className="w-4 h-4" />
-            Записаться за {formatPrice(service.totalPrice)}
-            {isPriceChanged && <TrendingUp className="w-3 h-3 ml-1" />}
+            <Calendar className="w-4 h-4 mr-2" />
+            Записаться
           </Button>
         </div>
       )}

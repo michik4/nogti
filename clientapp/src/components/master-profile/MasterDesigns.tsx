@@ -5,6 +5,7 @@ import { Heart, Eye, Plus } from "lucide-react";
 import { designService, NailDesign } from "@/services/designService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getImageUrl } from "@/utils/image.util";
+import { useNavigate } from "react-router-dom";
 
 interface MasterDesignsProps {
   masterId: string;
@@ -14,6 +15,7 @@ interface MasterDesignsProps {
 const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
   const [designs, setDesigns] = useState<NailDesign[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMasterDesigns = async () => {
@@ -74,7 +76,7 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
             <div
               key={design.id}
               className="aspect-square relative overflow-hidden rounded-lg cursor-pointer group"
-              onClick={() => onDesignClick?.(design)}
+              onClick={() => navigate(`/designs/${design.id}`)}
             >
               <img
                 src={getImageUrl(design.imageUrl) || '/placeholder.svg'}

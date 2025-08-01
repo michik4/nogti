@@ -1,3 +1,6 @@
+import { NailDesign } from "@/services/designService";
+import { Master } from "./user.types";
+
 export interface MasterService {
   id: string;
   name: string;
@@ -16,20 +19,7 @@ export interface MasterServiceDesign {
   additionalDuration?: number;
   notes?: string;
   isActive: boolean;
-  nailDesign: {
-    id: string;
-    title: string;
-    imageUrl: string;
-    description?: string;
-    type: 'basic' | 'designer';
-    tags?: string[];
-    isActive: boolean;
-    isModerated: boolean;
-    likesCount: number;
-    ordersCount: number;
-    minPrice?: number; // Минимальная цена от связанных услуг
-    createdAt?: string;
-  };
+  nailDesign: NailDesign;
   createdAt: string;
   updatedAt: string;
 }

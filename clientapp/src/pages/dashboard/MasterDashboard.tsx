@@ -285,7 +285,11 @@ const MasterDashboard = () => {
     }
   };
 
-  const handleCreateDesign = async (designData: any, serviceId?: string) => {
+  const handleCreateDesign = async (designData: any, serviceId?: string, serviceDesignData?: {
+    customPrice?: number;
+    additionalDuration?: number;
+    notes?: string;
+  }) => {
     try {
         const response = await designService.createNailDesign({
             ...designData,
@@ -308,13 +312,12 @@ const MasterDashboard = () => {
                 toast.error('Услуга не найдена');
                 return;
             }
-            const finalPrice = designData.minPrice || selectedServiceData.price;
             
             try {
                 console.log('Добавляем дизайн к услуге:', {
                     serviceId: selectedServiceData.id,
                     designId: response.data.id,
-                    finalPrice
+                    serviceDesignData
                 });
                 
                 if (!selectedServiceData.id) {
@@ -329,9 +332,9 @@ const MasterDashboard = () => {
                     selectedServiceData.id,
                     response.data.id,
                     {
-                        customPrice: finalPrice,
-                        additionalDuration: 0,
-                        notes: `Новый дизайн создан для услуги "${selectedServiceData.name}"`
+                        customPrice: serviceDesignData?.customPrice || 0,
+                        additionalDuration: serviceDesignData?.additionalDuration || 0,
+                        notes: serviceDesignData?.notes || `Новый дизайн создан для услуги "${selectedServiceData.name}"`
                     }
                 );
 
@@ -344,7 +347,14 @@ const MasterDashboard = () => {
                     [selectedServiceData.id]: updatedDesigns
                 }));
                 
-                toast.success(`Дизайн создан и добавлен к услуге "${selectedServiceData.name}" за ${finalPrice}₽`);
+                const priceText = serviceDesignData?.customPrice && serviceDesignData.customPrice > 0 
+                  ? ` за ${serviceDesignData.customPrice}₽` 
+                  : '';
+                const timeText = serviceDesignData?.additionalDuration && serviceDesignData.additionalDuration > 0 
+                  ? ` (+${serviceDesignData.additionalDuration} мин)` 
+                  : '';
+                
+                toast.success(`Дизайн создан и добавлен к услуге "${selectedServiceData.name}"${priceText}${timeText}`);
                 setIsAddDesignOpen(false);
                 // Обновляем список дизайнов во вкладке "Мои дизайны"
                 await refreshMasterDesigns();

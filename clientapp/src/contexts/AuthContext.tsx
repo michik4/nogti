@@ -97,12 +97,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // FALLBACK: Только если сервер недоступен, используем данные из токена
           // Но предупреждаем о возможных проблемах с кодировкой
           try {
-            const currentUserFromToken = authService.getCurrentUser();
+            const currentUser = await authService.getCurrentUser();
             
-            if (currentUserFromToken) {
+            if (currentUser) {
               console.warn('Используются данные из JWT токена. Кириллические символы могут отображаться некорректно.');
               console.warn('Попробуйте обновить страницу для повторной загрузки с сервера.');
-              setUser(currentUserFromToken);
+              setUser(currentUser);
               clearGuestSession();
               
               // Попытаемся обновить данные в фоне
@@ -257,7 +257,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const authResponse = await authService.login(credentials);
 
       // Получаем пользователя из токена
-      const currentUser = authService.getCurrentUser();
+      const currentUser = await authService.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
         // Удаляем гостевую сессию при успешной авторизации
@@ -287,7 +287,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const authResponse = await authService.register(data);
 
       // Получаем пользователя из токена
-      const currentUser = authService.getCurrentUser();
+      const currentUser = await authService.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
         // Удаляем гостевую сессию при успешной регистрации
@@ -432,7 +432,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!user) {
         console.warn('Попытка загрузки данных из JWT токена как fallback');
         try {
-          const currentUser = authService.getCurrentUser();
+          const currentUser = await authService.getCurrentUser();
           if (currentUser) {
             console.warn('Данные загружены из JWT. Возможны проблемы с кодировкой кириллических символов.');
             setUser(currentUser);

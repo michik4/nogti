@@ -146,9 +146,7 @@ export const MastersList: React.FC<MastersListProps> = ({
                 </div>
               )}
               {design.description && (
-                <p className={styles.designDescription}>
-                  {design.description}
-                </p>
+                <p className={styles.designDescription}>{design.description}</p>
               )}
             </div>
           </div>

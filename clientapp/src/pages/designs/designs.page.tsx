@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { DesignCard } from './components/DesignCard';
+import DesignCard from './components/DesignCard';
 import { FiltersPanel } from './components/FiltersPanel';
 import { MastersList } from './components/MastersList';
 import styles from './designs.page.module.css';

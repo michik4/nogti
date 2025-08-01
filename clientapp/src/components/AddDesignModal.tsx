@@ -17,7 +17,11 @@ import { getImageUrl } from "@/utils/image.util";
 interface AddDesignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (designData: CreateDesignData, serviceId?: string) => void;
+  onSubmit: (designData: CreateDesignData, serviceId?: string, serviceDesignData?: {
+    customPrice?: number;
+    additionalDuration?: number;
+    notes?: string;
+  }) => void;
   services: Array<{
     id: string;
     name: string;
@@ -33,6 +37,10 @@ interface CreateDesignData {
   type: 'basic' | 'designer';
   tags: string[];
   color?: string;
+  // Дополнительные поля для привязки к услуге
+  customPrice?: number;
+  additionalDuration?: number;
+  notes?: string;
 }
 
 const popularTags = [
@@ -55,7 +63,10 @@ const AddDesignModal = ({
     videoUrl: '',
     type: 'basic',
     tags: [],
-    color: ''
+    color: '',
+    customPrice: undefined,
+    additionalDuration: undefined,
+    notes: ''
   });
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -128,7 +139,15 @@ const AddDesignModal = ({
 
     try {
       setLoading(true);
-      await onSubmit(formData, selectedService === 'library' ? undefined : selectedService);
+      
+      // Подготавливаем данные для привязки к услуге
+      const serviceDesignData = selectedService !== 'library' ? {
+        customPrice: formData.customPrice,
+        additionalDuration: formData.additionalDuration,
+        notes: formData.notes
+      } : undefined;
+      
+      await onSubmit(formData, selectedService === 'library' ? undefined : selectedService, serviceDesignData);
       
       // Сброс формы
       setSelectedService('library');
@@ -139,7 +158,10 @@ const AddDesignModal = ({
         videoUrl: '',
         type: 'basic',
         tags: [],
-        color: ''
+        color: '',
+        customPrice: undefined,
+        additionalDuration: undefined,
+        notes: ''
       });
       handleClearImage();
       
@@ -258,7 +280,7 @@ const AddDesignModal = ({
                     </div>
                   
                   {selectedService !== 'library' && (
-                    <div className="ml-7">
+                    <div className="ml-7 space-y-4">
                       <Select value={selectedService} onValueChange={setSelectedService}>
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите услугу" />
@@ -271,6 +293,59 @@ const AddDesignModal = ({
                           ))}
                         </SelectContent>
                       </Select>
+
+                      {/* Дополнительная стоимость */}
+                      <div className="space-y-2">
+                        <Label htmlFor="customPrice">Дополнительная стоимость (опционально)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="customPrice"
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={formData.customPrice || ''}
+                            onChange={(e) => handleInputChange('customPrice', e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                          <span className="text-sm text-muted-foreground">₽</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Дополнительная стоимость за выполнение этого дизайна
+                        </p>
+                      </div>
+
+                      {/* Дополнительное время */}
+                      <div className="space-y-2">
+                        <Label htmlFor="additionalDuration">Дополнительное время (опционально)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="additionalDuration"
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={formData.additionalDuration || ''}
+                            onChange={(e) => handleInputChange('additionalDuration', e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                          <span className="text-sm text-muted-foreground">мин</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Дополнительное время на выполнение этого дизайна
+                        </p>
+                      </div>
+
+                      {/* Примечания */}
+                      <div className="space-y-2">
+                        <Label htmlFor="notes">Примечания для клиентов (опционально)</Label>
+                        <Textarea
+                          id="notes"
+                          placeholder="Особенности выполнения, рекомендации..."
+                          value={formData.notes}
+                          onChange={(e) => handleInputChange('notes', e.target.value)}
+                          rows={2}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Эта информация будет видна клиентам при выборе дизайна
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

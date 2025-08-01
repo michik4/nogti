@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, DollarSign, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { orderService } from "@/services/orderService";
 import { CreateOrderData } from "@/types/booking.types";
@@ -14,14 +15,14 @@ import ClientInfoForm, { ClientInfo } from "./booking/ClientInfoForm";
 import DesignInfo from "./booking/DesignInfo";
 import DesignSelector from "./booking/DesignSelector";
 import ConvertGuestModal from "./ConvertGuestModal";
-import React from "react"; // Added missing import
+import React from "react";
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  service: MasterService | null; // Услуга вместо дизайна
+  service: MasterService | null;
   masterId?: string;
-  preselectedDesignId?: string; // ID предвыбранного дизайна (например, с страницы дизайна)
+  preselectedDesignId?: string;
 }
 
 /**
@@ -45,8 +46,6 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
   // Эффект для установки предвыбранного дизайна при открытии модалки
   React.useEffect(() => {
     if (isOpen && preselectedDesignId) {
-      // Если есть предвыбранный дизайн, нам нужно найти соответствующий MasterServiceDesign
-      // Это будет сделано в DesignSelector, который загрузит список и найдет нужный
       console.log('Предвыбранный дизайн ID:', preselectedDesignId);
     }
   }, [isOpen, preselectedDesignId]);
@@ -57,6 +56,44 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
       resetForm();
     }
   }, [isOpen, preselectedDesignId]);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
+
+  const calculateTotalPrice = () => {
+    if (!service) return 0;
+    
+    let totalPrice = service.price;
+    
+    if (selectedDesign) {
+      // Добавляем кастомную цену дизайна, если она есть
+      if (selectedDesign.customPrice && selectedDesign.customPrice > 0) {
+        totalPrice += selectedDesign.customPrice;
+      }
+    }
+    
+    return totalPrice;
+  };
+
+  const calculateTotalDuration = () => {
+    if (!service) return 0;
+    
+    let totalDuration = service.duration;
+    
+    if (selectedDesign) {
+      // Добавляем дополнительное время дизайна, если оно есть
+      if (selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0) {
+        totalDuration += selectedDesign.additionalDuration;
+      }
+    }
+    
+    return totalDuration;
+  };
 
   const handleBooking = async () => {
     console.log('=== Начало handleBooking ===');
@@ -136,7 +173,6 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
   const resetForm = () => {
     setSelectedDate(undefined);
     setSelectedTime("");
-    // Если нет предвыбранного дизайна, сбрасываем выбор дизайна
     if (!preselectedDesignId) {
       setSelectedDesign(null);
     }
@@ -162,6 +198,9 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
     return null;
   }
 
+  const totalPrice = calculateTotalPrice();
+  const totalDuration = calculateTotalDuration();
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -178,7 +217,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                 <p className="text-sm text-muted-foreground mb-3">{service.description}</p>
               )}
               <div className="flex items-center gap-4 text-sm">
-                <span className="font-medium text-primary">{service.price}₽</span>
+                <span className="font-medium text-primary">{formatPrice(service.price)}</span>
                 <span className="text-muted-foreground">{service.duration} мин</span>
               </div>
             </div>
@@ -191,6 +230,62 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
               selectedDesignId={preselectedDesignId || selectedDesign?.nailDesign.id}
               onDesignSelect={handleDesignSelect}
             />
+
+            {/* Итоговая информация о цене и времени */}
+            {(selectedDesign || totalPrice !== service.price || totalDuration !== service.duration) && (
+              <>
+                <Separator />
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold text-sm mb-3">Итоговая стоимость и время:</h4>
+                  
+                  <div className="space-y-2">
+                    {/* Базовая услуга */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">{service.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{formatPrice(service.price)}</span>
+                        <span className="text-xs text-muted-foreground">{service.duration} мин</span>
+                      </div>
+                    </div>
+
+                    {/* Дополнительная стоимость мастера за дизайн */}
+                    {selectedDesign && selectedDesign.customPrice && selectedDesign.customPrice > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-blue-600">+ Доплата мастера за дизайн</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-blue-600">
+                            +{formatPrice(selectedDesign.customPrice)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Дополнительное время дизайна */}
+                    {selectedDesign && selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-orange-600">+ Дополнительное время</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-orange-600">
+                            +{selectedDesign.additionalDuration} мин
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Разделитель */}
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Итого:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-lg text-primary">{formatPrice(totalPrice)}</span>
+                          <span className="text-sm text-muted-foreground">{totalDuration} мин</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <Separator />
 
@@ -242,9 +337,12 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
             {/* Предупреждение для неавторизованных */}
             {!isAuthenticated && (
               <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  Для записи необходимо войти в систему или зарегистрироваться
-                </p>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-yellow-600" />
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    Для записи необходимо войти в систему или зарегистрироваться
+                  </p>
+                </div>
               </div>
             )}
           </div>

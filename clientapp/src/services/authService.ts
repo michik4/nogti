@@ -222,7 +222,7 @@ class AuthService {
           const testString = payload.fullName;
           const isValidUTF8 = /^[\u0000-\u007F\u0080-\uFFFF]*$/.test(testString);
           
-          if (!isValidUTF8) {
+          if (!isValidUTF8 || testString.includes('') || testString.includes('')) {
             console.warn('Обнаружены некорректные символы в fullName, очищаем');
             payload.fullName = undefined;
           } else {
@@ -245,45 +245,43 @@ class AuthService {
   }
 
   /**
-   * Получение информации о текущем пользователе из токена
+   * Получение информации о текущем пользователе с сервера
    */
-  getCurrentUser(): User | null {
+  async getCurrentUser(): Promise<User | null> {
     try {
-      const token = this.getToken();
-      if (!token) return null;
-
-      const payload = this.decodeToken(token);
-      if (!payload) return null;
-
-      // Проверяем наличие обязательных полей
-      if (!payload.userId || !payload.email || !payload.role) {
-        console.error('Токен не содержит обязательные поля');
-        this.logout();
+      // Проверяем аутентификацию
+      if (!this.isAuthenticated()) {
         return null;
       }
 
-      return {
-        id: payload.userId,
-        email: payload.email,
-        username: payload.username || payload.email,
-        role: payload.role as any,
-        fullName: payload.fullName,
-        phone: payload.phone,
-        isGuest: payload.isGuest,
-        avatar: payload.avatar,
-      };
+      // Получаем данные с сервера
+      const response = await apiService.get<User>('/auth/profile');
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      // Если сервер вернул ошибку, очищаем токены
+      if (response.error) {
+        console.error('Ошибка получения профиля с сервера:', response.error);
+        this.logout();
+        return null;
+      }
+      
+      return null;
     } catch (error) {
       console.error('Ошибка получения текущего пользователя:', error);
+      // При ошибке сети или сервера очищаем токены
       this.logout();
       return null;
     }
   }
 
   /**
-   * Получение типизированного пользователя
+   * Получение типизированного пользователя с сервера
    */
-  getCurrentUserTyped(): Client | Master | Admin | null {
-    const user = this.getCurrentUser();
+  async getCurrentUserTyped(): Promise<Client | Master | Admin | null> {
+    const user = await this.getCurrentUser();
     if (!user) return null;
 
     switch (user.role) {
@@ -299,32 +297,69 @@ class AuthService {
   }
 
   /**
-   * Проверка роли пользователя
+   * Проверка роли пользователя (синхронная версия для быстрых проверок)
    */
   hasRole(role: string): boolean {
-    const user = this.getCurrentUser();
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      const payload = this.decodeToken(token);
+      return payload?.role === role;
+    } catch (error) {
+      console.error('Ошибка проверки роли:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Проверка роли пользователя с сервера (асинхронная версия)
+   */
+  async hasRoleAsync(role: string): Promise<boolean> {
+    const user = await this.getCurrentUser();
     return user?.role === role;
   }
 
   /**
-   * Проверка, является ли пользователь клиентом
+   * Проверка, является ли пользователь клиентом (синхронная версия)
    */
   isClient(): boolean {
     return this.hasRole('client');
   }
 
   /**
-   * Проверка, является ли пользователь мастером
+   * Проверка, является ли пользователь клиентом (асинхронная версия)
+   */
+  async isClientAsync(): Promise<boolean> {
+    return this.hasRoleAsync('client');
+  }
+
+  /**
+   * Проверка, является ли пользователь мастером (синхронная версия)
    */
   isMaster(): boolean {
     return this.hasRole('nailmaster');
   }
 
   /**
-   * Проверка, является ли пользователь администратором
+   * Проверка, является ли пользователь мастером (асинхронная версия)
+   */
+  async isMasterAsync(): Promise<boolean> {
+    return this.hasRoleAsync('nailmaster');
+  }
+
+  /**
+   * Проверка, является ли пользователь администратором (синхронная версия)
    */
   isAdmin(): boolean {
     return this.hasRole('admin');
+  }
+
+  /**
+   * Проверка, является ли пользователь администратором (асинхронная версия)
+   */
+  async isAdminAsync(): Promise<boolean> {
+    return this.hasRoleAsync('admin');
   }
 
   /**
