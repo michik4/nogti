@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AddReviewForm from "./AddReviewForm";
 import { masterRating } from '@/types/master-rating.type';
 import { masterRatingService } from '@/services/master-rating.service';
 import { MasterProfile } from '@/types/master.types';
 import { Client, Master } from '../types/user.types';
-import { formatCustomDate } from '@/utils/time.util';
+import { formatCustomDate, formatDetailedDate } from '@/utils/time.util';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Review {
@@ -128,7 +129,7 @@ export const ReviewsModal = ({ isOpen, onClose, master, onReviewsUpdate }: Revie
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md mx-auto h-[80vh] p-0">
+        <DialogContent className="max-w-md mx-auto h-[auto] p-0">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="text-center">Отзывы о {master.fullName}</DialogTitle>
           </DialogHeader>
@@ -161,7 +162,18 @@ export const ReviewsModal = ({ isOpen, onClose, master, onReviewsUpdate }: Revie
                         <div className="flex items-center justify-between mb-1">
                           <h4 className="font-medium text-sm">{rating.client.fullName}</h4>
                           <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">{formatCustomDate(rating.createdAt)}</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="text-xs text-muted-foreground cursor-help">
+                                    {formatCustomDate(rating.createdAt)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{formatDetailedDate(rating.createdAt)}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                             {canEditOrDelete(rating) && (
                               <div className="flex gap-1 ml-2">
                                 <Button

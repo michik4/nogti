@@ -18,6 +18,20 @@ const isValidBase64 = (str: string): boolean => {
 };
 
 /**
+ * Безопасное кодирование в Base64 с поддержкой Unicode
+ */
+const safeBtoa = (str: string): string => {
+  return btoa(encodeURIComponent(str));
+};
+
+/**
+ * Безопасное декодирование из Base64 с поддержкой Unicode
+ */
+const safeAtob = (str: string): string => {
+  return decodeURIComponent(atob(str));
+};
+
+/**
  * Простое шифрование строки
  */
 export const encryptData = (data: string): string => {
@@ -29,7 +43,7 @@ export const encryptData = (data: string): string => {
       const charCode = data.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
       encrypted += String.fromCharCode(charCode);
     }
-    return btoa(encrypted); // Base64 кодирование
+    return safeBtoa(encrypted); // Безопасное Base64 кодирование
   } catch (error) {
     console.error('Ошибка шифрования:', error);
     return data; // Возвращаем исходные данные в случае ошибки
@@ -47,7 +61,7 @@ export const decryptData = (encryptedData: string): string => {
       return encryptedData;
     }
 
-    const decoded = atob(encryptedData); // Base64 декодирование
+    const decoded = safeAtob(encryptedData); // Безопасное Base64 декодирование
     let decrypted = '';
     for (let i = 0; i < decoded.length; i++) {
       const charCode = decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);

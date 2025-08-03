@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, MapPin, Star, SortAsc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MastersFiltersPanel } from './MastersFiltersPanel';
 import styles from './MastersSearch.module.css';
 
 interface MastersSearchProps {
@@ -28,31 +29,7 @@ const MastersSearch: React.FC<MastersSearchProps> = ({
   onSpecialtyChange,
   onSortChange
 }) => {
-  const cities = [
-    'Москва',
-    'Санкт-Петербург',
-    'Новосибирск',
-    'Екатеринбург',
-    'Казань',
-    'Нижний Новгород',
-    'Челябинск',
-    'Самара',
-    'Омск',
-    'Ростов-на-Дону'
-  ];
-
-  const specialties = [
-    'Классический маникюр',
-    'Аппаратный маникюр',
-    'Гель-лак',
-    'Наращивание ногтей',
-    'Дизайн ногтей',
-    'Педикюр',
-    'Парафинотерапия',
-    'Стемпинг',
-    'Роспись ногтей',
-    'Французский маникюр'
-  ];
+  const [showFilters, setShowFilters] = useState(false);
 
   const clearFilters = () => {
     onSearchChange('');
@@ -60,138 +37,91 @@ const MastersSearch: React.FC<MastersSearchProps> = ({
     onSpecialtyChange('');
   };
 
-  const hasActiveFilters = searchQuery || selectedCity || selectedSpecialty;
+  const handleFiltersApply = (filters: { city: string; specialty: string; sortBy: 'rating' | 'experience' | 'price' }) => {
+    onCityChange(filters.city);
+    onSpecialtyChange(filters.specialty);
+    onSortChange(filters.sortBy);
+    setShowFilters(false);
+  };
+
+  const handleFiltersReset = () => {
+    onCityChange('');
+    onSpecialtyChange('');
+    onSortChange('rating');
+    setShowFilters(false);
+  };
+
+  const hasActiveFilters = selectedCity || selectedSpecialty;
 
   return (
-    <Card className={styles.searchCard}>
-      <CardContent className={styles.searchContent}>
-        {/* Основная строка поиска */}
-        <div className={styles.searchBar}>
-          <div className={styles.searchInput}>
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск по имени мастера или специальности..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className={styles.input}
+    <div className={styles.searchSection}>
+      <form className={styles.searchForm}>
+        <div className={styles.searchWrapper}>
+          <Input
+            placeholder="Поиск по имени мастера или специальности..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
+        
+        <Button type="submit" variant="default" className={styles.searchButton}>
+          <Search className="w-4 h-4" />
+          Найти
+        </Button>
+        
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowFilters(!showFilters)}
+          className={styles.filtersButton}
+        >
+          <Filter className="w-4 h-4" />
+          Фильтры
+        </Button>
+      </form>
+
+      {/* Панель фильтров */}
+      {showFilters && (
+        <Card className={styles.filtersCard}>
+          <CardContent className={styles.filtersContent}>
+            <MastersFiltersPanel
+              selectedCity={selectedCity}
+              selectedSpecialty={selectedSpecialty}
+              sortBy={sortBy}
+              onApply={handleFiltersApply}
+              onReset={handleFiltersReset}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Фильтры */}
-        <div className={styles.filters}>
-          <div className={styles.filterGroup}>
-            <div className={styles.filterItem}>
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <Select value={selectedCity} onValueChange={onCityChange}>
-                <SelectTrigger className={styles.selectTrigger}>
-                  <SelectValue placeholder="Выберите город" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map(city => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={styles.filterItem}>
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <Select value={selectedSpecialty} onValueChange={onSpecialtyChange}>
-                <SelectTrigger className={styles.selectTrigger}>
-                  <SelectValue placeholder="Специальность" />
-                </SelectTrigger>
-                <SelectContent>
-                  {specialties.map(specialty => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={styles.filterItem}>
-              <SortAsc className="w-4 h-4 text-muted-foreground" />
-              <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger className={styles.selectTrigger}>
-                  <SelectValue placeholder="Сортировка" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rating">
-                    <div className={styles.sortOption}>
-                      <Star className="w-4 h-4" />
-                      По рейтингу
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="experience">
-                    По опыту
-                  </SelectItem>
-                  <SelectItem value="price">
-                    По цене
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Кнопка очистки фильтров */}
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className={styles.clearButton}
-            >
-              Очистить фильтры
-            </Button>
-          )}
-        </div>
-
-        {/* Активные фильтры */}
-        {hasActiveFilters && (
-          <div className={styles.activeFilters}>
-            {searchQuery && (
-              <Badge variant="secondary" className={styles.filterBadge}>
-                Поиск: {searchQuery}
-                <button
-                  onClick={() => onSearchChange('')}
-                  className={styles.removeBadge}
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
+      {/* Активные фильтры */}
+      {(selectedCity || selectedSpecialty) && (
+        <div className={styles.activeFilters}>
+          <div className={styles.filterTags}>
             {selectedCity && (
-              <Badge variant="secondary" className={styles.filterBadge}>
-                <MapPin className="w-3 h-3" />
-                {selectedCity}
-                <button
-                  onClick={() => onCityChange('')}
-                  className={styles.removeBadge}
-                >
-                  ×
-                </button>
+              <Badge variant="secondary" className={styles.filterTag}>
+                Город: {selectedCity}
               </Badge>
             )}
             {selectedSpecialty && (
-              <Badge variant="secondary" className={styles.filterBadge}>
-                <Filter className="w-3 h-3" />
-                {selectedSpecialty}
-                <button
-                  onClick={() => onSpecialtyChange('')}
-                  className={styles.removeBadge}
-                >
-                  ×
-                </button>
+              <Badge variant="secondary" className={styles.filterTag}>
+                Специальность: {selectedSpecialty}
               </Badge>
             )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className={styles.resetButton}
+          >
+            Сбросить все
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 

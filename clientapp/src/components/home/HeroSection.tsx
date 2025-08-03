@@ -26,23 +26,23 @@ const HeroSection = () => {
     if (!user) {
       // Неавторизованный пользователь
       return {
-        title: "NailMasters",
-        subtitle: "Найдите лучшего мастера маникюра в вашем городе и запишитесь онлайн",
-        searchPlaceholder: "Поиск мастера или услуги...",
+        title: "Каталог дизайнов маникюра",
+        subtitle: "Найдите идеальный дизайн для вашего маникюра и запишитесь к лучшему мастеру",
+        searchPlaceholder: "Поиск дизайна или мастера...",
         buttons: [
           {
-            text: "Найти мастера",
+            text: "Смотреть дизайны",
             variant: "default" as const,
             className: "gradient-bg text-white",
-            icon: null,
-            action: () => navigate("/auth")
+            icon: Palette,
+            action: () => navigate("/designs")
           },
           {
-            text: "Стать мастером", 
+            text: "Найти мастера", 
             variant: "outline" as const,
             className: "",
-            icon: null,
-            action: () => navigate("/auth")
+            icon: Users,
+            action: () => navigate("/masters")
           },
           {
             text: "Попробовать как гость",
@@ -59,23 +59,23 @@ const HeroSection = () => {
       // Гостевой пользователь
       const guestUser = user as any;
       return {
-        title: `Добро пожаловать, ${guestUser.name}!`,
-        subtitle: "Вы находитесь в гостевом режиме. Зарегистрируйтесь для полного функционала",
-        searchPlaceholder: "Поиск мастера или дизайна...",
+        title: `Добро пожаловать, гость!`,
+        subtitle: "Вы находитесь в гостевом режиме. Исследуйте дизайны и найдите идеальный маникюр",
+        searchPlaceholder: "Поиск дизайна или мастера...",
         buttons: [
           {
-            text: "Найти мастера",
+            text: "Смотреть дизайны",
             variant: "default" as const,
             className: "gradient-bg text-white",
-            icon: Users,
-            action: () => navigate("/masters")
-          },
-          {
-            text: "Посмотреть дизайны",
-            variant: "outline" as const,
-            className: "",
             icon: Palette,
             action: () => navigate("/designs")
+          },
+          {
+            text: "Найти мастера",
+            variant: "outline" as const,
+            className: "",
+            icon: Users,
+            action: () => navigate("/masters")
           },
           {
             text: "Зарегистрироваться",
@@ -94,22 +94,22 @@ const HeroSection = () => {
       const displayName = clientUser.fullName || clientUser.name || clientUser.email;
       return {
         title: `Привет, ${displayName}!`,
-        subtitle: "Готовы записаться на новую процедуру? Найдите мастера или выберите дизайн",
-        searchPlaceholder: "Поиск мастера или дизайна...",
+        subtitle: "Готовы записаться на новую процедуру? Выберите дизайн и найдите мастера",
+        searchPlaceholder: "Поиск дизайна или мастера...",
         buttons: [
           {
-            text: "Найти мастера",
+            text: "Выбрать дизайн",
             variant: "default" as const,
             className: "gradient-bg text-white",
-            icon: Users,
-            action: () => navigate("/masters")
-          },
-          {
-            text: "Выбрать дизайн",
-            variant: "outline" as const,
-            className: "",
             icon: Palette,
             action: () => navigate("/designs")
+          },
+          {
+            text: "Найти мастера",
+            variant: "outline" as const,
+            className: "",
+            icon: Users,
+            action: () => navigate("/masters")
           },
           {
             text: "Мои записи",
@@ -222,17 +222,7 @@ const HeroSection = () => {
       </p>
       
       {/* Поиск (только для авторизованных пользователей) */}
-      {user && (
-        <div className="max-w-md mx-auto relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-          <Input
-            placeholder={content.searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 py-3 text-lg"
-          />
-        </div>
-      )}
+      
 
       {/* Персонализированные кнопки действий */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">

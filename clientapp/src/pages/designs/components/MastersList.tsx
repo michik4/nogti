@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Star, MapPin, Clock, DollarSign, Phone, Mail, MessageCircle, AlertCircle } from 'lucide-react';
+import { X, Star, MapPin, Clock, DollarSign, Phone, Mail, MessageCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import { MasterWithServicesForDesign, MasterServiceForDesign } from '@/types/mas
 import { getImageUrl } from '@/utils/image.util';
 import { formatRatingWithReviews } from '@/utils/rating.util';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatPrice, roundPrice } from '@/utils/format.util';
 import styles from './MastersList.module.css';
 
 interface MastersListProps {
@@ -65,13 +66,7 @@ export const MastersList: React.FC<MastersListProps> = ({
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
+
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -127,29 +122,7 @@ export const MastersList: React.FC<MastersListProps> = ({
 
         <div className={styles.content}>
           {/* Информация о дизайне */}
-          <div className={styles.designInfo}>
-            <img 
-              src={getImageUrl(design.imageUrl) || '/placeholder.svg'} 
-              alt={design.title}
-              className={styles.designImage}
-            />
-            <div className={styles.designDetails}>
-              <h4 className={styles.designTitle}>{design.title}</h4>
-              {design.minPrice ? (
-                <p className={styles.designPrice}>
-                  от {formatPrice(design.minPrice)}
-                </p>
-              ) : (
-                <div className="flex items-center gap-2 text-amber-600">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">Нет услуг с этим дизайном</span>
-                </div>
-              )}
-              {design.description && (
-                <p className={styles.designDescription}>{design.description}</p>
-              )}
-            </div>
-          </div>
+          
 
           {/* Список мастеров */}
           <div className={styles.mastersList}>
@@ -185,16 +158,10 @@ export const MastersList: React.FC<MastersListProps> = ({
 
             {!isLoading && !error && masters.length === 0 && (
               <div className={styles.emptyState}>
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <AlertCircle className="w-8 h-8 text-amber-500" />
-                  <h3 className="text-lg font-semibold">Пока нет мастеров</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Мастера еще не добавили этот дизайн к своим услугам
-                  </p>
-                  <Button onClick={onClose} variant="outline">
-                    Закрыть
-                  </Button>
-                </div>
+                <p>Пока нет мастеров, которые могут выполнить этот дизайн</p>
+                <Button onClick={onClose} variant="outline">
+                  Закрыть
+                </Button>
               </div>
             )}
 
@@ -266,7 +233,21 @@ export const MastersList: React.FC<MastersListProps> = ({
                               <div className={styles.serviceHeader}>
                                 <h5 className={styles.serviceName}>{service.name}</h5>
                                 <div className={styles.servicePrice}>
-                                  {formatPrice(service.totalPrice)}
+                                  {(() => {
+                                    const basePrice = Number(service.basePrice) || 0;
+                                    const customPrice = Number(service.customPrice) || 0;
+                                    const totalPrice = basePrice + customPrice;
+                                    console.log('Service debug:', {
+                                      serviceId: service.id,
+                                      basePrice: service.basePrice,
+                                      customPrice: service.customPrice,
+                                      basePriceNum: basePrice,
+                                      customPriceNum: customPrice,
+                                      totalPrice,
+                                      isNaN: isNaN(totalPrice)
+                                    });
+                                    return isNaN(totalPrice) ? 'Цена не указана' : `${totalPrice} ₽`;
+                                  })()}
                                 </div>
                               </div>
                               
@@ -276,26 +257,12 @@ export const MastersList: React.FC<MastersListProps> = ({
                                   <span>{formatDuration(service.totalDuration)}</span>
                                 </div>
                                 
-                                {service.customPrice && service.basePrice !== service.customPrice && (
-                                  <div className={styles.serviceInfo}>
-                                    <DollarSign className="w-4 h-4 text-green-600" />
-                                    <span>Спец. цена (обычно {formatPrice(service.basePrice)})</span>
-                                  </div>
-                                )}
                                 
-                                {service.additionalDuration && service.additionalDuration > 0 && (
-                                  <div className={styles.serviceInfo}>
-                                    <Clock className="w-4 h-4 text-orange-600" />
-                                    <span>+{formatDuration(service.additionalDuration)} за сложность</span>
-                                  </div>
-                                )}
+                                
+                               
                               </div>
 
-                              {service.description && (
-                                <p className={styles.serviceDescription}>
-                                  {service.description}
-                                </p>
-                              )}
+                              
 
                               {service.notes && (
                                 <p className={styles.serviceNotes}>
@@ -303,19 +270,7 @@ export const MastersList: React.FC<MastersListProps> = ({
                                 </p>
                               )}
 
-                              <div className={styles.serviceActions}>
-                                <Button 
-                                  variant="default" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleBooking(master.id, service.id);
-                                  }}
-                                  className={styles.serviceBookButton}
-                                >
-                                  Записаться на эту услугу
-                                </Button>
-                              </div>
+                              
                             </div>
                           ))}
                         </div>
@@ -341,14 +296,7 @@ export const MastersList: React.FC<MastersListProps> = ({
                             Профиль мастера
                           </Button>
                           
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            onClick={() => handleBooking(master.id)}
-                            className={styles.actionButton}
-                          >
-                            Записаться (любая услуга)
-                          </Button>
+                          
                         </div>
                       </CardContent>
                     </Card>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Edit2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// Заглушка: функциональность редактирования профиля пока не реализована
-// import { useAuth } from "@/contexts/AuthContext";
+import AvatarUpload from "@/components/ui/avatar-upload";
+import { useAuth } from "@/contexts/AuthContext";
+import { userService } from "@/services/userService";
 import { User } from "@/types/user.types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,50 +18,120 @@ interface EditProfileModalProps {
 }
 
 const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
-  // Заглушка: получение данных пользователя
-  const currentUser = null; // Временно заглушка
-  const updateUserProfile = (data: any) => {
-    console.log('Обновление профиля (заглушка):', data);
-  };
+  const { user: currentUser, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const updateUserProfile = async (data: any) => {
+    try {
+      // Подготавливаем данные для обновления
+      const updateData = {
+        fullName: data.name,
+        email: data.email,
+        phone: data.phone,
+        location: data.location
+      };
+
+      console.log('Обновление профиля:', updateData);
+      
+      // Вызываем API для обновления профиля
+      const response = await userService.updateProfile('', updateData);
+      
+      if (response.success) {
+        // Обновляем данные пользователя в контексте
+        await refreshUser();
+        console.log('Профиль успешно обновлен:', response.data);
+      } else {
+        throw new Error(response.message || 'Ошибка обновления профиля');
+      }
+    } catch (error) {
+      console.error('Ошибка обновления профиля:', error);
+      throw error;
+    }
+  };
   
   const [formData, setFormData] = useState({
-    name: currentUser?.name || "",
+    name: (currentUser as any)?.fullName || (currentUser as any)?.name || "",
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
-    location: currentUser?.location || "",
+    location: (currentUser as any)?.location || (currentUser as any)?.address || "",
     avatar: currentUser?.avatar || "/placeholder.svg"
   });
+
+  // Обновляем форму при изменении пользователя
+  React.useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        name: (currentUser as any)?.fullName || (currentUser as any)?.name || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+        location: (currentUser as any)?.location || (currentUser as any)?.address || "",
+        avatar: currentUser.avatar || "/placeholder.svg"
+      });
+    }
+  }, [currentUser]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile(formData);
-    toast({
-      title: "Профиль обновлен",
-      description: "Ваши данные успешно сохранены.",
-    });
-    onClose();
+    if (isSubmitting) return;
+    
+    // Валидация формы
+    if (!formData.name.trim()) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Имя обязательно для заполнения.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Email обязателен для заполнения.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await updateUserProfile(formData);
+      toast({
+        title: "Профиль обновлен",
+        description: "Ваши данные успешно сохранены.",
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить профиль.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleAvatarUpload = () => {
-    // Симуляция загрузки фото
-    const newAvatar = "/placeholder.svg";
-    setFormData(prev => ({ ...prev, avatar: newAvatar }));
-    toast({
-      title: "Фото загружено",
-      description: "Ваше фото профиля обновлено.",
-    });
+  const handleAvatarUpdate = (newAvatarUrl: string) => {
+    console.log('Обновление аватара в форме:', newAvatarUrl);
+    setFormData(prev => ({ ...prev, avatar: newAvatarUrl }));
   };
 
-  if (!currentUser) return null;
+  // Убираем эту проверку, чтобы модальное окно отображалось
+  // if (!currentUser) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent 
+        className="max-w-md"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle>Редактировать профиль</DialogTitle>
           <DialogDescription>
@@ -68,22 +139,22 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-4"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src={formData.avatar} />
-                <AvatarFallback>{formData.name[0]}</AvatarFallback>
-              </Avatar>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
-                onClick={handleAvatarUpload}
-              >
-                <Upload className="w-4 h-4" />
-              </Button>
+            <div onClick={(e) => e.stopPropagation()}>
+              <AvatarUpload
+                currentAvatar={formData.avatar}
+                userName={formData.name}
+                onAvatarUpdate={handleAvatarUpdate}
+                size="lg"
+                showUploadButton={true}
+                className="self-center"
+              />
             </div>
           </div>
 
@@ -93,6 +164,7 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               required
             />
           </div>
@@ -104,6 +176,7 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               required
             />
           </div>
@@ -115,6 +188,7 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               required
             />
           </div>
@@ -125,15 +199,28 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
               id="location"
               value={formData.location}
               onChange={(e) => handleInputChange("location", e.target.value)}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }} 
+              disabled={isSubmitting}
+            >
               Отмена
             </Button>
-            <Button type="submit">
-              Сохранить
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isSubmitting ? "Сохранение..." : "Сохранить"}
             </Button>
           </DialogFooter>
         </form>

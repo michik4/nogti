@@ -646,4 +646,111 @@ export class AuthController {
             res.status(500).json(response);
         }
     }
+
+    /**
+     * Обновление профиля пользователя
+     */
+    static async updateProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = (req as any).userId;
+            const role = (req as any).user?.role;
+            const { fullName, email, phone, location } = req.body;
+
+            if (!userId) {
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'ID пользователя не найден в токене'
+                };
+                res.status(401).json(response);
+                return;
+            }
+
+            // Валидация данных
+            if (!fullName || !email) {
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'Имя и email обязательны для заполнения'
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            // Проверяем, что email не занят другим пользователем
+            const userRepository = AppDataSource.getRepository(UserEntity);
+            const existingUser = await userRepository.findOne({
+                where: { email }
+            });
+
+            if (existingUser && existingUser.id !== userId) {
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'Пользователь с таким email уже существует'
+                };
+                res.status(409).json(response);
+                return;
+            }
+
+            // Определяем репозиторий в зависимости от роли
+            let repository;
+            switch (role) {
+                case Role.CLIENT:
+                    repository = AppDataSource.getRepository(ClientEntity);
+                    break;
+                case Role.NAILMASTER:
+                    repository = AppDataSource.getRepository(NailMasterEntity);
+                    break;
+                case Role.ADMIN:
+                    repository = AppDataSource.getRepository(AdminEntity);
+                    break;
+                default:
+                    repository = AppDataSource.getRepository(UserEntity);
+            }
+
+            // Обновляем данные пользователя
+            const updateData: any = {
+                fullName,
+                email,
+                phone: phone || null,
+                updatedAt: new Date()
+            };
+
+            // Для мастеров добавляем адрес
+            if (role === Role.NAILMASTER && location) {
+                updateData.address = location;
+            }
+
+            await repository.update(userId, updateData);
+
+            // Получаем обновленного пользователя
+            const updatedUser = await repository.findOne({ where: { id: userId } });
+
+            if (!updatedUser) {
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'Пользователь не найден'
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            // Удаляем пароль из ответа
+            const { password, ...userWithoutPassword } = updatedUser;
+
+            const response: ApiResponse = {
+                success: true,
+                data: userWithoutPassword,
+                message: 'Профиль успешно обновлен'
+            };
+
+            res.json(response);
+
+        } catch (error) {
+            console.error('Ошибка обновления профиля:', error);
+            const response: ApiResponse = {
+                success: false,
+                error: 'Внутренняя ошибка сервера'
+            };
+            res.status(500).json(response);
+        }
+    }
 } 

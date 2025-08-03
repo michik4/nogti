@@ -1,37 +1,47 @@
-.page {
+.designsPage {
   min-height: 100vh;
   background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-.main {
-  padding-top: 4rem;
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
-.container {
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
 }
 
-/* Header section */
-.header {
-  margin-bottom: 2rem;
-}
-
-.titleSection {
-  margin-bottom: 1.5rem;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: hsl(var(--foreground));
-  margin-bottom: 0.5rem;
+.headerTitle h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
 }
 
 .subtitle {
+  font-size: 0.875rem;
   color: hsl(var(--muted-foreground));
-  font-size: 1.1rem;
+  margin: 0;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.searchSection {
+  margin-bottom: 1.5rem;
 }
 
 /* Search form */
@@ -46,21 +56,12 @@
   position: relative;
   flex: 1;
   min-width: 250px;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  color: hsl(var(--muted-foreground));
-  pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 .searchInput {
-  padding-left: 2.5rem;
+  width: 100%;
 }
 
 .searchButton, .filtersButton {
@@ -112,12 +113,36 @@
 }
 
 .stats {
-  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
 }
 
-.statsText {
+.statsItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statsNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: hsl(var(--primary));
+}
+
+.statsLabel {
+  font-size: 0.875rem;
   color: hsl(var(--muted-foreground));
-  font-size: 0.9rem;
+}
+
+.searchInfo {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
 }
 
 /* Loader */
@@ -149,6 +174,7 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+  align-items: stretch;
 }
 
 /* Empty state */
@@ -157,22 +183,23 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 1rem;
-  gap: 1rem;
+  padding: 3rem;
   text-align: center;
-  color: hsl(var(--muted-foreground));
 }
 
-.emptyState h3 {
-  font-size: 1.5rem;
+.emptyStateIcon {
+  margin-bottom: 1rem;
+}
+
+.emptyStateTitle {
+  font-size: 1.25rem;
   font-weight: 600;
-  color: hsl(var(--foreground));
-  margin: 0;
+  margin-bottom: 0.5rem;
 }
 
-.emptyState p {
-  font-size: 1rem;
-  margin: 0;
+.emptyStateDescription {
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 1.5rem;
 }
 
 /* Pagination */
@@ -196,25 +223,22 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 0.75rem;
-  }
-
-  .title {
-    font-size: 1.75rem;
-  }
-
-  .subtitle {
-    font-size: 1rem;
+  .main {
+    padding: 1rem;
   }
 
   .searchForm {
     flex-direction: column;
+    gap: 0.5rem;
   }
 
   .searchWrapper {
     width: 100%;
     min-width: auto;
+  }
+
+  .searchInput {
+    width: 100%;
   }
 
   .searchButton, .filtersButton {
@@ -226,6 +250,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+    padding: 0.75rem;
   }
 
   .filterTags {
@@ -233,22 +258,46 @@
   }
 
   .designsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
   }
 
   .pagination {
     flex-wrap: wrap;
     gap: 0.25rem;
   }
+
+  .emptyState {
+    padding: 2rem 1rem;
+  }
 }
 
 @media (max-width: 480px) {
+  .main {
+    padding: 0.75rem;
+  }
+
+  .searchInput {
+    font-size: 16px; /* Предотвращает зум на iOS */
+  }
+
   .designsGrid {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 
   .pageNumbers {
     flex-wrap: wrap;
+  }
+
+  .filtersContent {
+    padding: 1rem;
   }
 } 

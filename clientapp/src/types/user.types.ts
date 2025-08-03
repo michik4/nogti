@@ -39,6 +39,7 @@ export interface Master extends User {
   description?: string;
   latitude?: number;
   longitude?: number;
+  avatar_url?: string; // алиас для avatar с сервера
 }
 
 // Расширенный интерфейс мастера для UI

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Clock, Plus, Trash2, Edit, Check, X, Copy, CalendarDays } from "lucide-react";
+import { Calendar, Clock, Plus, Trash2, Edit, Check, X, Copy, CalendarDays, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,19 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
     "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
     "20:00", "20:30", "21:00"
   ];
+
+  // Функция для получения фиксированных часовых окон
+  const getHourlySlots = () => {
+    const slots = [];
+    for (let hour = 8; hour <= 21; hour++) {
+      const startTime = `${hour.toString().padStart(2, '0')}:00`;
+      const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
+      slots.push({ startTime, endTime, label: `${startTime} - ${endTime}` });
+    }
+    return slots;
+  };
+
+  const hourlySlots = getHourlySlots();
 
   const weekDays = [
     { value: 0, label: 'Воскресенье' },
@@ -270,6 +283,11 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
     }
   };
 
+  // Функция для форматирования времени без секунд
+  const formatTime = (time: string) => {
+    return time.substring(0, 5); // Убираем секунды, оставляем только HH:MM
+  };
+
   const selectedDaySchedule = scheduleDays.find(day => 
     selectedDate && day.date === selectedDate.toISOString().split('T')[0]
   );
@@ -283,6 +301,17 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
             Управление расписанием
           </DialogTitle>
         </DialogHeader>
+
+        {/* Информационное уведомление о занятых окнах */}
+        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-800 dark:text-blue-200">
+              <p className="font-medium mb-1">Информация о расписании</p>
+              <p>Система использует фиксированные часовые окна (09:00-10:00, 10:00-11:00 и т.д.). Занятые окна (подтвержденные заказы) автоматически скрываются из расписания. При длительности услуги более 60 минут соседние часовые окна также блокируются.</p>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Календарь и управление */}
@@ -311,35 +340,37 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
               )}
             </div>
 
-            <div>
-              <Label className="text-base font-semibold mb-4 block">
+            <div className="flex flex-col items-center">
+              <Label className="text-base font-semibold mb-4 block text-center">
                 {isMultiSelectMode ? 'Выберите даты' : 'Выберите дату'}
               </Label>
-                           {isMultiSelectMode ? (
-               <CalendarComponent
-                 mode="multiple"
-                 selected={selectedDates}
-                 onSelect={setSelectedDates}
-                 disabled={(date) => {
-                   const today = new Date();
-                   today.setHours(0, 0, 0, 0);
-                   return date < today;
-                 }}
-                 className="rounded-md border"
-               />
-             ) : (
-               <CalendarComponent
-                 mode="single"
-                 selected={selectedDate}
-                 onSelect={setSelectedDate}
-                 disabled={(date) => {
-                   const today = new Date();
-                   today.setHours(0, 0, 0, 0);
-                   return date < today;
-                 }}
-                 className="rounded-md border"
-               />
-             )}
+              <div className="flex justify-center">
+                {isMultiSelectMode ? (
+                  <CalendarComponent
+                    mode="multiple"
+                    selected={selectedDates}
+                    onSelect={setSelectedDates}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
+                    className="rounded-md border"
+                  />
+                ) : (
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
+                    className="rounded-md border"
+                  />
+                )}
+              </div>
             </div>
 
             {isWeekCopyMode && (
@@ -427,7 +458,7 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
                                 <div className="flex items-center gap-3">
                                   <Clock className="w-4 h-4 text-muted-foreground" />
                                   <span className="font-medium">
-                                    {slot.startTime} - {slot.endTime}
+                                    {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                                   </span>
                                   <Badge className={getStatusColor(slot.status)}>
                                     {getStatusText(slot.status)}
@@ -454,7 +485,8 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
                           </div>
                         ) : (
                           <div className="text-center py-4 text-muted-foreground">
-                            <p>Нет временных окон</p>
+                            <p>Нет доступных временных окон</p>
+                            <p className="text-xs mt-1">Возможно, все окна заняты заказами</p>
                           </div>
                         )}
                       </CardContent>
@@ -470,7 +502,7 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
                       <div className="flex items-center gap-3">
                         <Clock className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">
-                          {slot.startTime} - {slot.endTime}
+                          {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                         </span>
                         <Badge className={getStatusColor(slot.status)}>
                           {getStatusText(slot.status)}
@@ -502,7 +534,8 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
             ) : selectedDate ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Нет временных окон на эту дату</p>
+                <p>Нет доступных временных окон на эту дату</p>
+                <p className="text-sm mt-2">Возможно, все окна заняты заказами или не созданы</p>
                 <Button 
                   variant="outline" 
                   className="mt-4"
@@ -531,33 +564,26 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Время начала</Label>
-                  <Select value={newSlot.startTime} onValueChange={(value) => setNewSlot(prev => ({ ...prev, startTime: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map(time => (
-                        <SelectItem key={time} value={time}>{time}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Время окончания</Label>
-                  <Select value={newSlot.endTime} onValueChange={(value) => setNewSlot(prev => ({ ...prev, endTime: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map(time => (
-                        <SelectItem key={time} value={time}>{time}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label>Выберите часовое окно</Label>
+                <Select 
+                  value={`${newSlot.startTime}-${newSlot.endTime}`} 
+                  onValueChange={(value) => {
+                    const [startTime, endTime] = value.split('-');
+                    setNewSlot(prev => ({ ...prev, startTime, endTime }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите временное окно" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hourlySlots.map(slot => (
+                      <SelectItem key={`${slot.startTime}-${slot.endTime}`} value={`${slot.startTime}-${slot.endTime}`}>
+                        {slot.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Статус</Label>
@@ -600,33 +626,26 @@ const ScheduleManager = ({ isOpen, onClose }: ScheduleManagerProps) => {
             </DialogHeader>
             {editingSlot && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Время начала</Label>
-                    <Select value={editingSlot.startTime} onValueChange={(value) => setEditingSlot(prev => prev ? { ...prev, startTime: value } : null)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map(time => (
-                          <SelectItem key={time} value={time}>{time}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Время окончания</Label>
-                    <Select value={editingSlot.endTime} onValueChange={(value) => setEditingSlot(prev => prev ? { ...prev, endTime: value } : null)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map(time => (
-                          <SelectItem key={time} value={time}>{time}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label>Выберите часовое окно</Label>
+                  <Select 
+                    value={`${editingSlot.startTime}-${editingSlot.endTime}`} 
+                    onValueChange={(value) => {
+                      const [startTime, endTime] = value.split('-');
+                      setEditingSlot(prev => prev ? { ...prev, startTime, endTime } : null);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите временное окно" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hourlySlots.map(slot => (
+                        <SelectItem key={`${slot.startTime}-${slot.endTime}`} value={`${slot.startTime}-${slot.endTime}`}>
+                          {slot.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Статус</Label>

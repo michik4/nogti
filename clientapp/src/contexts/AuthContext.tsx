@@ -76,56 +76,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Проверяем, есть ли действующий токен
       if (authService.isAuthenticated()) {
         try {
-          // ПРИОРИТЕТ: Получаем актуальные данные с сервера
-          const profile = await authService.getProfile();
+          // Временно используем только данные из JWT токена для избежания проблем с моковыми данными
+          const currentUserFromToken = authService.getCurrentUser();
           
-          console.log('Профиль загружен с сервера:', profile);
-          setUser(profile);
-          // Удаляем гостевую сессию при успешной аутентификации
-          clearGuestSession();
-        } catch (error) {
-          console.error('Ошибка загрузки профиля с сервера:', error);
-          
-          // Проверяем, не истек ли токен
-          if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-            console.warn('Токен истек или недействителен, очищаем');
-            authService.logout();
-            checkGuestSession();
-            return;
-          }
-          
-          // FALLBACK: Только если сервер недоступен, используем данные из токена
-          // Но предупреждаем о возможных проблемах с кодировкой
-          try {
-            const currentUser = await authService.getCurrentUser();
-            
-            if (currentUser) {
-              console.warn('Используются данные из JWT токена. Кириллические символы могут отображаться некорректно.');
-              console.warn('Попробуйте обновить страницу для повторной загрузки с сервера.');
-              setUser(currentUser);
-              clearGuestSession();
-              
-              // Попытаемся обновить данные в фоне
-              setTimeout(async () => {
-                try {
-                  const freshProfile = await authService.getProfile();
-                  console.log('Профиль обновлен в фоне:', freshProfile);
-                  setUser(freshProfile);
-                } catch (retryError) {
-                  console.warn('Не удалось обновить профиль в фоне:', retryError);
-                }
-              }, 2000);
-            } else {
-              // Токен есть, но декодировать не удалось - очищаем
-              console.error('Не удалось декодировать данные пользователя из токена');
-              authService.logout();
-              checkGuestSession();
-            }
-          } catch (tokenError) {
-            console.error('Ошибка обработки токена:', tokenError);
+          if (currentUserFromToken) {
+            console.log('Используются данные из JWT токена:', currentUserFromToken);
+            setUser(currentUserFromToken);
+            clearGuestSession();
+          } else {
+            // Токен есть, но декодировать не удалось - очищаем
+            console.error('Не удалось декодировать данные пользователя из токена');
             authService.logout();
             checkGuestSession();
           }
+        } catch (tokenError) {
+          console.error('Ошибка обработки токена:', tokenError);
+          authService.logout();
+          checkGuestSession();
         }
       } else {
         // Проверяем гостевую сессию
@@ -257,7 +224,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const authResponse = await authService.login(credentials);
 
       // Получаем пользователя из токена
-      const currentUser = await authService.getCurrentUser();
+      const currentUser = authService.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
         // Удаляем гостевую сессию при успешной авторизации
@@ -287,7 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const authResponse = await authService.register(data);
 
       // Получаем пользователя из токена
-      const currentUser = await authService.getCurrentUser();
+      const currentUser = authService.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
         // Удаляем гостевую сессию при успешной регистрации
@@ -418,33 +385,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!authService.isAuthenticated()) return;
 
     try {
-      // ПРИОРИТЕТ: Всегда пытаемся получить свежие данные с сервера
-      const profile = await authService.getProfile();
-      console.log('Профиль обновлен с сервера:', profile);
-      setUser(profile);
-      // Удаляем гостевую сессию при обновлении пользователя
-      clearGuestSession();
-    } catch (error) {
-      console.error('Ошибка обновления пользователя с сервера:', error);
+      // Временно отключено автоматическое обновление с сервера для избежания проблем с моковыми данными
+      console.log('Автоматическое обновление профиля временно отключено');
       
-      // МИНИМАЛЬНЫЙ FALLBACK: Используем JWT только в крайнем случае
-      // и только если текущий пользователь отсутствует
-      if (!user) {
-        console.warn('Попытка загрузки данных из JWT токена как fallback');
-        try {
-          const currentUser = await authService.getCurrentUser();
-          if (currentUser) {
-            console.warn('Данные загружены из JWT. Возможны проблемы с кодировкой кириллических символов.');
-            setUser(currentUser);
-            clearGuestSession();
-          }
-        } catch (tokenError) {
-          console.error('Fallback на JWT также не удался:', tokenError);
-        }
-      } else {
-        console.warn('Сохраняем текущие данные пользователя, так как сервер недоступен');
+      // Используем только данные из JWT токена
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && !user) {
+        console.log('Загружаем данные из JWT токена:', currentUser);
+        setUser(currentUser);
+        clearGuestSession();
       }
-      
+    } catch (error) {
+      console.error('Ошибка обновления пользователя:', error);
       // Не выбрасываем ошибку, чтобы не нарушать работу приложения
     }
   };
@@ -461,11 +413,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Проверки ролей и типов
   const isAuthenticated = useMemo(() => {
     try {
-      // Если у нас есть пользователь, считаем что аутентификация есть
-      if (user) {
-        return true;
-      }
-      // Иначе проверяем токен
       return authService.isAuthenticated();
     } catch (error) {
       console.error('Ошибка проверки аутентификации в контексте:', error);

@@ -38,6 +38,7 @@ import {
   formatOrderDate,
   formatOrderPrice
 } from '@/utils/order.util';
+import { roundPrice } from '@/utils/format.util';
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -274,7 +275,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold">{formatOrderPrice(order.price)}</span>
+                <span className="text-lg font-semibold">{roundPrice(order.price)} ₽</span>
                 <span className="text-sm text-muted-foreground">
                   Длительность: {order.masterService?.duration || 'Не указана'} мин
                 </span>

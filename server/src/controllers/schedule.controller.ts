@@ -2,14 +2,17 @@ import { Response, Request } from 'express';
 import { AppDataSource } from '../conf/orm.conf';
 import { ScheduleEntity, ScheduleStatus } from '../entities/schedule.entity';
 import { NailMasterEntity } from '../entities/nailmaster.entity';
+import { OrderEntity, OrderStatus } from '../entities/order.entity';
+import { MasterServiceEntity } from '../entities/master-service.entity';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { ApiResponse, PaginatedResponse } from '../types/api.type';
 import { ResponseUtil } from '../utils/response.util';
 import { validate as uuidValidate } from 'uuid';
+import { MoreThanOrEqual, LessThan } from 'typeorm';
 
 export class ScheduleController {
     /**
-     * Получить расписание мастера
+     * Получить расписание мастера с учетом занятых окон
      */
     static async getMasterSchedule(req: Request, res: Response): Promise<void> {
         try {
@@ -48,10 +51,76 @@ export class ScheduleController {
                 .addOrderBy('schedule.startTime', 'ASC')
                 .getMany();
 
+            // Получаем заказы для определения занятых окон
+            const orderRepository = AppDataSource.getRepository(OrderEntity);
+            const orders = await orderRepository.find({
+                where: [
+                    { nailMaster: { id: masterId }, status: OrderStatus.CONFIRMED },
+                    { nailMaster: { id: masterId }, status: OrderStatus.COMPLETED }
+                ],
+                relations: ['masterService']
+            });
+
+            // Создаем карту занятых окон
+            const occupiedSlots = new Map<string, Set<string>>();
+            
+            orders.forEach(order => {
+                if (order.confirmedDateTime) {
+                    const orderDate = order.confirmedDateTime.toISOString().split('T')[0];
+                    const orderTime = order.confirmedDateTime.toTimeString().substring(0, 5);
+                    
+                    if (!occupiedSlots.has(orderDate)) {
+                        occupiedSlots.set(orderDate, new Set());
+                    }
+                    
+                    const timeSlots = occupiedSlots.get(orderDate)!;
+                    
+                    // Добавляем основное время заказа
+                    timeSlots.add(orderTime);
+                    
+                    // Если длительность услуги больше 60 минут, занимаем соседние часы
+                    if (order.masterService && order.masterService.duration > 60) {
+                        const startHour = parseInt(orderTime.split(':')[0]);
+                        const startMinute = parseInt(orderTime.split(':')[1]);
+                        
+                        // Вычисляем количество часов, которые нужно заблокировать
+                        const totalHours = Math.ceil(order.masterService.duration / 60);
+                        
+                        for (let hour = 1; hour < totalHours; hour++) {
+                            const nextHour = (startHour + hour) % 24;
+                            const nextTime = `${nextHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+                            timeSlots.add(nextTime);
+                        }
+                    }
+                }
+            });
+
+            // Фильтруем расписание, исключая занятые окна
+            const filteredSchedules = schedules.filter(schedule => {
+                const dateStr = typeof schedule.workDate === 'string' 
+                    ? schedule.workDate 
+                    : schedule.workDate.toISOString().split('T')[0];
+                
+                const occupiedTimes = occupiedSlots.get(dateStr);
+                if (!occupiedTimes) return true; // Нет занятых окон на эту дату
+                
+                // Проверяем, не пересекается ли окно с занятым временем
+                const slotStart = schedule.startTime;
+                const slotEnd = schedule.endTime;
+                
+                for (const occupiedTime of occupiedTimes) {
+                    // Если окно начинается в занятое время или пересекается с ним
+                    if (slotStart <= occupiedTime && slotEnd > occupiedTime) {
+                        return false; // Исключаем это окно
+                    }
+                }
+                
+                return true;
+            });
+
             // Группируем по датам
             const scheduleByDate: { [date: string]: ScheduleEntity[] } = {};
-            schedules.forEach(schedule => {
-                // workDate может быть строкой или Date объектом
+            filteredSchedules.forEach(schedule => {
                 const dateStr = typeof schedule.workDate === 'string' 
                     ? schedule.workDate 
                     : schedule.workDate.toISOString().split('T')[0];
@@ -74,7 +143,7 @@ export class ScheduleController {
     }
 
     /**
-     * Получить расписание текущего мастера
+     * Получить расписание текущего мастера с учетом занятых окон
      */
     static async getMySchedule(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
@@ -99,10 +168,76 @@ export class ScheduleController {
                 .addOrderBy('schedule.startTime', 'ASC')
                 .getMany();
 
+            // Получаем заказы для определения занятых окон
+            const orderRepository = AppDataSource.getRepository(OrderEntity);
+            const orders = await orderRepository.find({
+                where: [
+                    { nailMaster: { id: userId }, status: OrderStatus.CONFIRMED },
+                    { nailMaster: { id: userId }, status: OrderStatus.COMPLETED }
+                ],
+                relations: ['masterService']
+            });
+
+            // Создаем карту занятых окон
+            const occupiedSlots = new Map<string, Set<string>>();
+            
+            orders.forEach(order => {
+                if (order.confirmedDateTime) {
+                    const orderDate = order.confirmedDateTime.toISOString().split('T')[0];
+                    const orderTime = order.confirmedDateTime.toTimeString().substring(0, 5);
+                    
+                    if (!occupiedSlots.has(orderDate)) {
+                        occupiedSlots.set(orderDate, new Set());
+                    }
+                    
+                    const timeSlots = occupiedSlots.get(orderDate)!;
+                    
+                    // Добавляем основное время заказа
+                    timeSlots.add(orderTime);
+                    
+                    // Если длительность услуги больше 60 минут, занимаем соседние часы
+                    if (order.masterService && order.masterService.duration > 60) {
+                        const startHour = parseInt(orderTime.split(':')[0]);
+                        const startMinute = parseInt(orderTime.split(':')[1]);
+                        
+                        // Вычисляем количество часов, которые нужно заблокировать
+                        const totalHours = Math.ceil(order.masterService.duration / 60);
+                        
+                        for (let hour = 1; hour < totalHours; hour++) {
+                            const nextHour = (startHour + hour) % 24;
+                            const nextTime = `${nextHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+                            timeSlots.add(nextTime);
+                        }
+                    }
+                }
+            });
+
+            // Фильтруем расписание, исключая занятые окна
+            const filteredSchedules = schedules.filter(schedule => {
+                const dateStr = typeof schedule.workDate === 'string' 
+                    ? schedule.workDate 
+                    : schedule.workDate.toISOString().split('T')[0];
+                
+                const occupiedTimes = occupiedSlots.get(dateStr);
+                if (!occupiedTimes) return true; // Нет занятых окон на эту дату
+                
+                // Проверяем, не пересекается ли окно с занятым временем
+                const slotStart = schedule.startTime;
+                const slotEnd = schedule.endTime;
+                
+                for (const occupiedTime of occupiedTimes) {
+                    // Если окно начинается в занятое время или пересекается с ним
+                    if (slotStart <= occupiedTime && slotEnd > occupiedTime) {
+                        return false; // Исключаем это окно
+                    }
+                }
+                
+                return true;
+            });
+
             // Группируем по датам
             const scheduleByDate: { [date: string]: ScheduleEntity[] } = {};
-            schedules.forEach(schedule => {
-                // workDate может быть строкой или Date объектом
+            filteredSchedules.forEach(schedule => {
                 const dateStr = typeof schedule.workDate === 'string' 
                     ? schedule.workDate 
                     : schedule.workDate.toISOString().split('T')[0];
@@ -132,35 +267,49 @@ export class ScheduleController {
             const userId = req.userId!;
             const { workDate, startTime, endTime, status = 'available', notes } = req.body;
 
+            console.log(`=== ЗАПРОС НА ДОБАВЛЕНИЕ ВРЕМЕННОГО ОКНА ===`);
+            console.log(`User ID: ${userId}`);
+            console.log(`Данные запроса:`, { workDate, startTime, endTime, status, notes });
+
             // Валидация данных
             if (!workDate || !startTime || !endTime) {
+                console.log(`❌ ОШИБКА ВАЛИДАЦИИ: отсутствуют обязательные поля`);
                 ResponseUtil.error(res, 'Необходимо указать дату, время начала и окончания', 400);
                 return;
             }
 
             // Проверяем, что пользователь - мастер
+            console.log(`Проверка мастера для ID: ${userId}`);
             const masterRepository = AppDataSource.getRepository(NailMasterEntity);
             const master = await masterRepository.findOne({ where: { id: userId } });
 
             if (!master) {
+                console.log(`❌ ОШИБКА: мастер не найден`);
                 ResponseUtil.error(res, 'Мастер не найден', 404);
                 return;
             }
+            console.log(`✅ Мастер найден: ${master.fullName || master.username}`);
 
             // Проверяем, что время окончания больше времени начала
+            console.log(`Проверка времени: ${startTime} >= ${endTime} = ${startTime >= endTime}`);
             if (startTime >= endTime) {
+                console.log(`❌ ОШИБКА: время окончания не больше времени начала`);
                 ResponseUtil.error(res, 'Время окончания должно быть больше времени начала', 400);
                 return;
             }
+            console.log(`✅ Время корректное`);
 
             // Проверяем, что дата не в прошлом
             const workDateObj = new Date(workDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+            console.log(`Проверка даты: ${workDateObj} < ${today} = ${workDateObj < today}`);
             if (workDateObj < today) {
+                console.log(`❌ ОШИБКА: дата в прошлом`);
                 ResponseUtil.error(res, 'Нельзя создавать временные окна в прошлом', 400);
                 return;
             }
+            console.log(`✅ Дата корректная`);
 
             // Проверяем, нет ли пересечений с существующими окнами
             const scheduleRepository = AppDataSource.getRepository(ScheduleEntity);
@@ -171,41 +320,48 @@ export class ScheduleController {
                 }
             });
 
-            console.log(`Проверка пересечений для даты ${workDate}, новых окон: ${startTime}-${endTime}`);
+            console.log(`=== ДЕТАЛЬНАЯ ПРОВЕРКА ПЕРЕСЕЧЕНИЙ ===`);
+            console.log(`Дата: ${workDate}`);
+            console.log(`Новое окно: ${startTime}-${endTime}`);
+            console.log(`Мастер ID: ${userId}`);
             console.log(`Найдено существующих окон: ${conflictingSlots.length}`);
-            console.log('Существующие окна:', conflictingSlots.map(slot => `${slot.startTime}-${slot.endTime} (${slot.status})`));
+            
+            if (conflictingSlots.length > 0) {
+                console.log('Существующие окна:');
+                conflictingSlots.forEach((slot, index) => {
+                    console.log(`  ${index + 1}. ${slot.startTime}-${slot.endTime} (статус: ${slot.status})`);
+                });
+            }
 
             for (const slot of conflictingSlots) {
-                // Проверяем пересечение временных интервалов
+                // Проверяем точное совпадение временных окон
                 const newStart = startTime;
                 const newEnd = endTime;
                 const existingStart = slot.startTime;
                 const existingEnd = slot.endTime;
                 
-                console.log(`Сравниваем: новое ${newStart}-${newEnd} с существующим ${existingStart}-${existingEnd} (статус: ${slot.status})`);
+                console.log(`\n--- Сравнение ---`);
+                console.log(`Новое окно: ${newStart}-${newEnd}`);
+                console.log(`Существующее окно: ${existingStart}-${existingEnd} (статус: ${slot.status})`);
+                console.log(`Проверка точного совпадения: ${newStart === existingStart && newEnd === existingEnd}`);
                 
                 // Проверяем точное совпадение
                 if (newStart === existingStart && newEnd === existingEnd) {
-                    console.log(`Найдено точное совпадение! Новое: ${newStart}-${newEnd}, Существующее: ${existingStart}-${existingEnd}`);
+                    console.log(`❌ НАЙДЕНО ТОЧНОЕ СОВПАДЕНИЕ!`);
+                    console.log(`Новое: ${newStart}-${newEnd}`);
+                    console.log(`Существующее: ${existingStart}-${existingEnd}`);
                     ResponseUtil.error(res, `Временное окно с таким же временем уже существует (${existingStart}-${existingEnd})`, 409);
                     return;
                 }
                 
-                // Проверяем, есть ли пересечение
-                // Два интервала пересекаются, если:
-                // 1. Начало нового интервала находится внутри существующего ИЛИ
-                // 2. Конец нового интервала находится внутри существующего ИЛИ
-                // 3. Новый интервал полностью содержит существующий
-                if (
-                    (newStart >= existingStart && newStart < existingEnd) ||
-                    (newEnd > existingStart && newEnd <= existingEnd) ||
-                    (newStart <= existingStart && newEnd >= existingEnd)
-                ) {
-                    console.log(`Найдено пересечение! Новое: ${newStart}-${newEnd}, Существующее: ${existingStart}-${existingEnd}`);
-                    ResponseUtil.error(res, `Временное окно пересекается с существующим (${existingStart}-${existingEnd})`, 409);
-                    return;
-                }
+                console.log(`✅ Точного совпадения нет - продолжаем`);
+                
+                // Для фиксированных часовых окон проверяем только точное совпадение
+                // Не проверяем пересечения, так как окна должны быть независимыми
+                // Например: 09:00-10:00 и 10:00-11:00 не должны конфликтовать
             }
+            
+            console.log(`✅ Все проверки пройдены - создаем новое окно`);
 
             // Создаем новое временное окно
             const newSlot = new ScheduleEntity();
@@ -217,10 +373,14 @@ export class ScheduleController {
             newSlot.notes = notes;
 
             const savedSlot = await scheduleRepository.save(newSlot);
-            console.log(`Временное окно успешно добавлено: ${savedSlot.startTime}-${savedSlot.endTime} на ${savedSlot.workDate}`);
+            console.log(`🎉 Временное окно успешно добавлено!`);
+            console.log(`ID: ${savedSlot.id}`);
+            console.log(`Время: ${savedSlot.startTime}-${savedSlot.endTime}`);
+            console.log(`Дата: ${savedSlot.workDate}`);
+            console.log(`Статус: ${savedSlot.status}`);
             ResponseUtil.success(res, 'Временное окно добавлено', savedSlot);
         } catch (error) {
-            console.error('Ошибка добавления временного окна:', error);
+            console.error('❌ ОШИБКА добавления временного окна:', error);
             ResponseUtil.error(res, 'Внутренняя ошибка сервера');
         }
     }
@@ -313,7 +473,7 @@ export class ScheduleController {
     }
 
     /**
-     * Получить доступные временные окна для бронирования
+     * Получить доступные временные окна для бронирования с учетом занятых окон
      */
     static async getAvailableSlots(req: Request, res: Response): Promise<void> {
         try {
@@ -331,7 +491,7 @@ export class ScheduleController {
             }
 
             const scheduleRepository = AppDataSource.getRepository(ScheduleEntity);
-            const availableSlots = await scheduleRepository.find({
+            const allSlots = await scheduleRepository.find({
                 where: {
                     nailMaster: { id: masterId },
                     workDate: new Date(date),
@@ -340,6 +500,66 @@ export class ScheduleController {
                 order: {
                     startTime: 'ASC'
                 }
+            });
+
+            // Получаем заказы для определения занятых окон
+            const orderRepository = AppDataSource.getRepository(OrderEntity);
+            const orders = await orderRepository.find({
+                where: [
+                    { 
+                        nailMaster: { id: masterId }, 
+                        status: OrderStatus.CONFIRMED,
+                        confirmedDateTime: MoreThanOrEqual(new Date(date))
+                    },
+                    { 
+                        nailMaster: { id: masterId }, 
+                        status: OrderStatus.COMPLETED,
+                        confirmedDateTime: MoreThanOrEqual(new Date(date))
+                    }
+                ],
+                relations: ['masterService']
+            });
+
+            // Создаем карту занятых окон
+            const occupiedSlots = new Set<string>();
+            
+            orders.forEach(order => {
+                if (order.confirmedDateTime) {
+                    const orderTime = order.confirmedDateTime.toTimeString().substring(0, 5);
+                    
+                    // Добавляем основное время заказа
+                    occupiedSlots.add(orderTime);
+                    
+                    // Если длительность услуги больше 60 минут, занимаем соседние часы
+                    if (order.masterService && order.masterService.duration > 60) {
+                        const startHour = parseInt(orderTime.split(':')[0]);
+                        const startMinute = parseInt(orderTime.split(':')[1]);
+                        
+                        // Вычисляем количество часов, которые нужно заблокировать
+                        const totalHours = Math.ceil(order.masterService.duration / 60);
+                        
+                        for (let hour = 1; hour < totalHours; hour++) {
+                            const nextHour = (startHour + hour) % 24;
+                            const nextTime = `${nextHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+                            occupiedSlots.add(nextTime);
+                        }
+                    }
+                }
+            });
+
+            // Фильтруем слоты, исключая занятые окна
+            const availableSlots = allSlots.filter(slot => {
+                const slotStart = slot.startTime;
+                const slotEnd = slot.endTime;
+                
+                for (const occupiedTime of occupiedSlots) {
+                    // Если окно начинается в занятое время или пересекается с ним
+                    if (slotStart <= occupiedTime && slotEnd > occupiedTime) {
+                        return false; // Исключаем это окно
+                    }
+                }
+                
+                return true;
             });
 
             ResponseUtil.success(res, 'Доступные временные окна получены', availableSlots);

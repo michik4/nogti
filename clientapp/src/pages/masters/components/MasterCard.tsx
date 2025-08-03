@@ -103,15 +103,7 @@ const MasterCard: React.FC<MasterCardProps> = ({ master, onClick }) => {
           </div>
         </div>
         
-        {/* Статус активности */}
-        <div className={styles.status}>
-          <Badge 
-            variant="default"
-            className={styles.statusBadge}
-          >
-            Доступен для записи
-          </Badge>
-        </div>
+        
       </CardContent>
     </Card>
   );

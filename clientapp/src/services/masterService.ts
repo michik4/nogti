@@ -121,10 +121,23 @@ export const masterService = {
     }
   },
 
-  // Получение дизайнов мастера
+  // Получение дизайнов мастера (только добавленные в услуги)
   getMasterDesigns: async (): Promise<any[]> => {
-    const response = await api.get<any[]>('/masters/my-designs');
-    return response.data as any[];
+    const response = await api.get<any>('/masters/my-designs');
+    if (response.success && response.data) {
+      return response.data;
+    }
+    return [];
+  },
+
+  // Получение всех дизайнов мастера (созданные + добавленные в услуги)
+  getAllMasterDesigns: async (masterId?: string): Promise<any[]> => {
+    const id = masterId || 'me';
+    const response = await api.get<any>(`/designs/master/${id}`);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    return [];
   },
 
   // Добавление дизайна в "Я так могу"
@@ -135,7 +148,18 @@ export const masterService = {
 
   // Удаление дизайна из "Я так могу"
   removeCanDoDesign: async (designId: string): Promise<void> => {
-    await api.delete<void>(`/masters/can-do/${designId}`);
+    try {
+      await api.delete<void>(`/masters/can-do/${designId}`);
+    } catch (error: any) {
+      // Перебрасываем ошибку с более понятным сообщением
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.message) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Не удалось удалить дизайн из списка');
+      }
+    }
   },
 
   // Обновление информации о дизайне

@@ -20,6 +20,9 @@ router.post('/refresh', AuthController.refreshToken);
 router.post('/register-admin', AuthController.registerAdmin);
 router.get('/profile', AuthMiddleware.authenticate, AuthController.getProfile);
 
+// Роут для обновления профиля
+router.put('/profile', AuthMiddleware.authenticate, AuthController.updateProfile);
+
 // Роут для обновления аватара
 router.put('/avatar', AuthMiddleware.authenticate, upload.single('avatar'), AuthController.updateAvatar);
 

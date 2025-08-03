@@ -11,6 +11,7 @@ import { PhotoGalleryModal } from "./PhotoGalleryModal";
 import { Master } from "@/data/mockMasters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
+import MasterAvailability from "./master-profile/MasterAvailability";
 import { toast } from "sonner";
 
 interface MasterProfileProps {
@@ -159,10 +160,7 @@ const MasterProfile = ({ master, onBack }: MasterProfileProps) => {
             </div>
 
             <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>Сегодня до 20:00</span>
-              </div>
+              <MasterAvailability masterId={master.id} />
               <div className="flex items-center gap-1">
                 <Instagram className="w-4 h-4" />
                 <span>@{master.name.toLowerCase().replace(' ', '_')}</span>

@@ -1,6 +1,7 @@
 import { apiService } from './api';
 import { ApiResponse, PaginatedResponse } from '@/types/api.types';
-import { Design, NailDesignType } from '@/types/design.types';
+import { NailDesignType } from '@/types/design.types';
+import { MasterDesign } from '@/types/master.types';
 
 export interface CreateDesignData {
   title: string;
@@ -21,7 +22,7 @@ export interface NailDesign {
   source: 'admin' | 'client' | 'master';
   tags?: string[];
   color?: string;
-  minPrice?: number; // Минимальная цена от связанных услуг
+  estimatedPrice?: number;
   likesCount: number;
   ordersCount: number;
   isActive: boolean;
@@ -47,9 +48,9 @@ export interface LikeResponse {
 }
 
 export const designService = {
-  async getDesigns(masterId?: string): Promise<ApiResponse<Design[]>> {
+  async getDesigns(masterId?: string): Promise<ApiResponse<MasterDesign[]>> {
     const endpoint = masterId ? `/designs?masterId=${masterId}` : '/designs';
-    return apiService.get<Design[]>(endpoint);
+    return apiService.get<MasterDesign[]>(endpoint);
   },
 
   async getAllDesigns(params?: GetDesignsParams): Promise<PaginatedResponse<NailDesign>> {
@@ -82,8 +83,8 @@ export const designService = {
     return apiService.get<any>(`/designs/search?${queryParams.toString()}`) as Promise<PaginatedResponse<NailDesign>>;
   },
 
-  async createDesign(data: CreateDesignData): Promise<ApiResponse<Design>> {
-    return apiService.post<Design>('/designs', data);
+  async createDesign(data: CreateDesignData): Promise<ApiResponse<MasterDesign>> {
+    return apiService.post<MasterDesign>('/designs', data);
   },
 
   async createNailDesign(data: {
@@ -94,20 +95,21 @@ export const designService = {
     type: 'basic' | 'designer';
     tags: string[];
     color?: string;
+    estimatedPrice?: number;
   }): Promise<ApiResponse<NailDesign>> {
     return apiService.post<NailDesign>('/designs', data);
   },
 
-  async updateDesign(designId: string, updates: Partial<Design>): Promise<ApiResponse<Design>> {
-    return apiService.put<Design>(`/designs/${designId}`, updates);
+  async updateDesign(designId: string, updates: Partial<MasterDesign>): Promise<ApiResponse<MasterDesign>> {
+    return apiService.put<MasterDesign>(`/designs/${designId}`, updates);
   },
 
   async deleteDesign(designId: string): Promise<ApiResponse<null>> {
     return apiService.delete<null>(`/designs/${designId}`);
   },
 
-  async toggleDesignStatus(designId: string): Promise<ApiResponse<Design>> {
-    return apiService.put<Design>(`/designs/${designId}/toggle`, {});
+  async toggleDesignStatus(designId: string): Promise<ApiResponse<MasterDesign>> {
+    return apiService.put<MasterDesign>(`/designs/${designId}/toggle`, {});
   },
 
   async getPopularDesigns(limit: number = 8): Promise<ApiResponse<NailDesignType[]>> {

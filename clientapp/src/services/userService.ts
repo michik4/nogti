@@ -18,16 +18,16 @@ export interface RegisterData {
 }
 
 export interface ClientStats {
-    totalReviews: number;
-    averageRatingGiven: number;
-    ratingDistribution: number[];
-    recentReviews: Array<{
-        id: string;
-        ratingNumber: number;
-        description: string;
-        createdAt: Date;
-        masterName: string;
-    }>;
+  totalReviews: number;
+  averageRatingGiven: number;
+  ratingDistribution: number[];
+  recentReviews: Array<{
+    id: string;
+    ratingNumber: number;
+    description: string;
+    createdAt: Date;
+    masterName: string;
+  }>;
 }
 
 export const userService = {
@@ -61,7 +61,7 @@ export const userService = {
   },
 
   async updateProfile(userId: string, updates: Partial<User>): Promise<ApiResponse<Client | Master>> {
-    return apiService.put<Client | Master>(`/users/${userId}`, updates);
+    return apiService.put<Client | Master>(`/auth/profile`, updates);
   },
 
   async logout(): Promise<ApiResponse<null>> {
@@ -76,13 +76,13 @@ export const userService = {
    * Получает статистику отзывов клиента
    */
   getClientStats: async (): Promise<ClientStats> => {
-      try {
-          const res = await apiService.get<ClientStats>('/auth/client/stats', true);
-          return res.data;
-      } catch (error) {
-          console.error('Ошибка при получении статистики клиента:', error);
-          throw error;
-      }
+    try {
+      const res = await apiService.get<ClientStats>('/auth/client/stats', true);
+      return res.data;
+    } catch (error) {
+      console.error('Ошибка при получении статистики клиента:', error);
+      throw error;
+    }
   },
 
   /**

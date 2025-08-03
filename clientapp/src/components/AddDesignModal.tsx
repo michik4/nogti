@@ -17,11 +17,7 @@ import { getImageUrl } from "@/utils/image.util";
 interface AddDesignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (designData: CreateDesignData, serviceId?: string, serviceDesignData?: {
-    customPrice?: number;
-    additionalDuration?: number;
-    notes?: string;
-  }) => void;
+  onSubmit: (designData: CreateDesignData, serviceId?: string) => void;
   services: Array<{
     id: string;
     name: string;
@@ -37,10 +33,7 @@ interface CreateDesignData {
   type: 'basic' | 'designer';
   tags: string[];
   color?: string;
-  // Дополнительные поля для привязки к услуге
-  customPrice?: number;
-  additionalDuration?: number;
-  notes?: string;
+  estimatedPrice?: number;
 }
 
 const popularTags = [
@@ -64,9 +57,7 @@ const AddDesignModal = ({
     type: 'basic',
     tags: [],
     color: '',
-    customPrice: undefined,
-    additionalDuration: undefined,
-    notes: ''
+    estimatedPrice: 0
   });
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -81,7 +72,11 @@ const AddDesignModal = ({
   
   // Устанавливаем цену по умолчанию при изменении услуги
   React.useEffect(() => {
-    // Больше не нужно устанавливать цену, так как она будет рассчитываться от услуг
+    if (selectedServiceData) {
+      setFormData(prev => ({ ...prev, estimatedPrice: selectedServiceData.price }));
+    } else {
+      setFormData(prev => ({ ...prev, estimatedPrice: 0 }));
+    }
   }, [selectedServiceData]);
 
   const handleInputChange = (field: keyof CreateDesignData, value: any) => {
@@ -139,15 +134,7 @@ const AddDesignModal = ({
 
     try {
       setLoading(true);
-      
-      // Подготавливаем данные для привязки к услуге
-      const serviceDesignData = selectedService !== 'library' ? {
-        customPrice: formData.customPrice,
-        additionalDuration: formData.additionalDuration,
-        notes: formData.notes
-      } : undefined;
-      
-      await onSubmit(formData, selectedService === 'library' ? undefined : selectedService, serviceDesignData);
+      await onSubmit(formData, selectedService === 'library' ? undefined : selectedService);
       
       // Сброс формы
       setSelectedService('library');
@@ -159,9 +146,7 @@ const AddDesignModal = ({
         type: 'basic',
         tags: [],
         color: '',
-        customPrice: undefined,
-        additionalDuration: undefined,
-        notes: ''
+        estimatedPrice: 0
       });
       handleClearImage();
       
@@ -280,7 +265,7 @@ const AddDesignModal = ({
                     </div>
                   
                   {selectedService !== 'library' && (
-                    <div className="ml-7 space-y-4">
+                    <div className="ml-7">
                       <Select value={selectedService} onValueChange={setSelectedService}>
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите услугу" />
@@ -293,59 +278,6 @@ const AddDesignModal = ({
                           ))}
                         </SelectContent>
                       </Select>
-
-                      {/* Дополнительная стоимость */}
-                      <div className="space-y-2">
-                        <Label htmlFor="customPrice">Дополнительная стоимость (опционально)</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            id="customPrice"
-                            type="number"
-                            placeholder="0"
-                            min="0"
-                            value={formData.customPrice || ''}
-                            onChange={(e) => handleInputChange('customPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                          />
-                          <span className="text-sm text-muted-foreground">₽</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Дополнительная стоимость за выполнение этого дизайна
-                        </p>
-                      </div>
-
-                      {/* Дополнительное время */}
-                      <div className="space-y-2">
-                        <Label htmlFor="additionalDuration">Дополнительное время (опционально)</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            id="additionalDuration"
-                            type="number"
-                            placeholder="0"
-                            min="0"
-                            value={formData.additionalDuration || ''}
-                            onChange={(e) => handleInputChange('additionalDuration', e.target.value ? parseInt(e.target.value) : undefined)}
-                          />
-                          <span className="text-sm text-muted-foreground">мин</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Дополнительное время на выполнение этого дизайна
-                        </p>
-                      </div>
-
-                      {/* Примечания */}
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">Примечания для клиентов (опционально)</Label>
-                        <Textarea
-                          id="notes"
-                          placeholder="Особенности выполнения, рекомендации..."
-                          value={formData.notes}
-                          onChange={(e) => handleInputChange('notes', e.target.value)}
-                          rows={2}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Эта информация будет видна клиентам при выборе дизайна
-                        </p>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -471,16 +403,19 @@ const AddDesignModal = ({
             />
           </div>
 
-          {/* Цвет */}
-          <div className="space-y-2">
-            <Label htmlFor="color">Основной цвет</Label>
-            <Input
-              id="color"
-              placeholder="Например: розовый, нюд, черный"
-              value={formData.color}
-              onChange={(e) => handleInputChange('color', e.target.value)}
-            />
-          </div>
+          
+            
+
+            <div className="space-y-2">
+              <Label htmlFor="color">Основной цвет</Label>
+              <Input
+                id="color"
+                placeholder="Например: розовый, нюд, черный"
+                value={formData.color}
+                onChange={(e) => handleInputChange('color', e.target.value)}
+              />
+            </div>
+          
 
           {/* Видео (опционально) */}
           <div className="space-y-2">

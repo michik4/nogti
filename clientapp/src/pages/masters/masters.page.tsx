@@ -11,6 +11,7 @@ import { masterService } from '@/services/masterService';
 import { Master } from '@/types/user.types';
 import MastersSearch from './components/MastersSearch';
 import MastersGrid from './components/MastersGrid';
+import PageHeader from '@/components/PageHeader';
 import styles from './masters.page.module.css';
 
 interface MastersPageProps {}
@@ -131,19 +132,11 @@ const MastersPage: React.FC<MastersPageProps> = () => {
   return (
     <div className={styles.mastersPage}>
       {/* Заголовок страницы */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className={styles.headerTitle}>
-            <h1>Мастера маникюра</h1>
-            <p className={styles.subtitle}>
-              Найдите лучших мастеров в вашем городе
-            </p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Мастера маникюра"
+        
+        onBackClick={() => navigate(-1)}
+      />
 
       <main className={styles.main}>
         {/* Поиск и фильтры */}

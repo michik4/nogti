@@ -169,7 +169,7 @@ const DesignDetailModal = ({
                 <Button 
                   variant="outline" 
                   onClick={handleICanDoThis}
-                  className="w-full"
+                  className="w-full bg-pink-500 hover:bg-pink-600 text-white border-pink-500"
                 >
                   <User className="w-4 h-4 mr-2" />
                   Я так могу

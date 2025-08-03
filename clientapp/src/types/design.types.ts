@@ -22,7 +22,7 @@ export interface NailDesignType {
   source: 'admin' | 'client' | 'master';
   tags?: string[];
   color?: string;
-  minPrice?: number; // Минимальная цена от связанных услуг
+  estimatedPrice?: number;
   likesCount: number;
   ordersCount: number;
   isActive: boolean;

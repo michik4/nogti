@@ -34,6 +34,7 @@ import {
   formatOrderPrice,
   canCompleteOrder
 } from "@/utils/order.util";
+import { roundPrice } from "@/utils/format.util";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import CompleteOrderModal from "@/components/CompleteOrderModal";
 
@@ -315,7 +316,7 @@ const MasterOrdersTab: React.FC<MasterOrdersTabProps> = ({ masterId }) => {
           <div className="space-y-2 mb-3">
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="w-4 h-4" />
-              <span>Запрошено: {formatOrderDate(order.requestedDateTime)}</span>
+              <span>Запись на: {formatOrderDate(order.requestedDateTime)}</span>
             </div>
             {order.proposedDateTime && (
               <div className="flex items-center gap-2 text-sm text-orange-600">
@@ -343,9 +344,9 @@ const MasterOrdersTab: React.FC<MasterOrdersTabProps> = ({ masterId }) => {
           {/* Цена */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
+              
               <span className="font-semibold">
-                {formatOrderPrice(order.price || order.masterService?.price || 0)}
+                {roundPrice(order.price || order.masterService?.price || 0)} ₽
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

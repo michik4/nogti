@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { Loader2, Search, Filter, SlidersHorizontal, ArrowLeft } from 'lucide-react';
 import { designService, NailDesign, GetDesignsParams } from '@/services/designService';
-import Header from '@/components/Header';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import DesignCard from './components/DesignCard';
+import { DesignCard } from './components/DesignCard';
 import { FiltersPanel } from './components/FiltersPanel';
 import { MastersList } from './components/MastersList';
+import PageHeader from '@/components/PageHeader';
 import styles from './designs.page.module.css';
 
 export const DesignsPage: React.FC = () => {
@@ -140,49 +140,44 @@ export const DesignsPage: React.FC = () => {
   };
 
   return (
-    <div className={styles.page}>
-      <Header />
-      
-      <main className={styles.main}>
-        <div className={styles.container}>
-          {/* Заголовок и поиск */}
-          <div className={styles.header}>
-            <div className={styles.titleSection}>
-              <h1 className={styles.title}>Дизайны маникюра</h1>
-              <p className={styles.subtitle}>
-                Найдите идеальный дизайн и мастера для его воплощения
-              </p>
-            </div>
+    <div className={styles.designsPage}>
+      {/* Заголовок страницы */}
+      <PageHeader
+        title="Дизайны маникюра"
+        
+        onBackClick={() => navigate(-1)}
+      />
 
-            {/* Поиск и фильтры */}
-            <form onSubmit={handleSearch} className={styles.searchForm}>
-              <div className={styles.searchWrapper}>
-                <Search className={styles.searchIcon} />
-                <Input
-                  type="text"
-                  placeholder="Поиск дизайнов..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={styles.searchInput}
-                />
-              </div>
-              
-              <Button type="submit" variant="default" className={styles.searchButton}>
-                <Search className="w-4 h-4" />
-                Найти
-              </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className={styles.filtersButton}
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Фильтры
-              </Button>
-            </form>
-          </div>
+      <main className={styles.main}>
+        {/* Поиск и фильтры */}
+        <div className={styles.searchSection}>
+          <form onSubmit={handleSearch} className={styles.searchForm}>
+            <div className={styles.searchWrapper}>
+              <Input
+                type="text"
+                placeholder="Поиск дизайнов..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
+            
+            <Button type="submit" variant="default" className={styles.searchButton}>
+              <Search className="w-4 h-4" />
+              Найти
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className={styles.filtersButton}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Фильтры
+            </Button>
+          </form>
+        </div>
 
           {/* Активные фильтры */}
           {(filters.type || filters.source || filters.color || filters.tags) && (
@@ -234,15 +229,22 @@ export const DesignsPage: React.FC = () => {
             </Card>
           )}
 
-          {/* Результаты */}
-          <div className={styles.results}>
             {/* Статистика */}
             {!isLoading && (
               <div className={styles.stats}>
-                <p className={styles.statsText}>
-                  Найдено {totalCount} дизайн{totalCount === 1 ? '' : totalCount < 5 ? 'а' : 'ов'}
-                  {searchQuery && ` по запросу "${searchQuery}"`}
-                </p>
+                <div className={styles.statsItem}>
+                  <span className={styles.statsNumber}>
+                    {isLoading ? '...' : designs.length}
+                  </span>
+                  <span className={styles.statsLabel}>
+                    {designs.length === 1 ? 'дизайн найден' : 'дизайнов найдено'}
+                  </span>
+                </div>
+                {searchQuery && (
+                  <div className={styles.searchInfo}>
+                    Результаты поиска для: <strong>"{searchQuery}"</strong>
+                  </div>
+                )}
               </div>
             )}
 
@@ -273,6 +275,10 @@ export const DesignsPage: React.FC = () => {
                     design={design}
                     onViewDetails={() => handleViewDesign(design.id)}
                     onViewMasters={() => handleViewMasters(design)}
+                    onDesignAdded={() => {
+                      // Обновляем статистику или другие данные при необходимости
+                      console.log('Дизайн добавлен в услуги мастера');
+                    }}
                   />
                 ))}
               </div>
@@ -281,9 +287,15 @@ export const DesignsPage: React.FC = () => {
             {/* Пустое состояние */}
             {!isLoading && !error && designs.length === 0 && (
               <div className={styles.emptyState}>
-                <Filter className="w-16 h-16 text-muted-foreground" />
-                <h3>Дизайны не найдены</h3>
-                <p>Попробуйте изменить параметры поиска или фильтры</p>
+                <div className={styles.emptyStateIcon}>
+                  <Filter className="w-12 h-12 text-muted-foreground" />
+                </div>
+                <h3 className={styles.emptyStateTitle}>
+                  Дизайны не найдены
+                </h3>
+                <p className={styles.emptyStateDescription}>
+                  Попробуйте изменить параметры поиска или фильтры
+                </p>
                 <Button onClick={handleFiltersReset} variant="outline">
                   Сбросить фильтры
                 </Button>
@@ -328,9 +340,7 @@ export const DesignsPage: React.FC = () => {
                 </Button>
               </div>
             )}
-          </div>
-        </div>
-      </main>
+          </main>
 
       {/* Модальное окно со списком мастеров */}
       {showMasters && selectedDesign && (

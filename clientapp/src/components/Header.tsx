@@ -2,14 +2,16 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, Settings, LogOut, Home, LayoutDashboard, UserCircle, Crown, Users, Palette } from "lucide-react";
+import { User, Settings, LogOut, Home, LayoutDashboard, UserCircle, Crown, Users, Palette, Menu, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -59,15 +61,7 @@ const Header = () => {
       // Роль-специфичные элементы
       if ('role' in user) {
         switch (user.role) {
-          case 'nailmaster':
-            items.push({
-              icon: LayoutDashboard,
-              label: "Дашборд",
-              path: "/master-dashboard",
-              active: location.pathname === "/master-dashboard",
-              action: () => navigate("/master-dashboard")
-            });
-            break;
+          
           
           case 'admin':
             items.push({
@@ -112,13 +106,13 @@ const Header = () => {
         items.push({
           icon: User,
           label: "Профиль",
-          path: "/client-dashboard",
-          active: location.pathname === "/client-dashboard",
+          path: user.role === 'nailmaster' ? "/master-dashboard" : "/client-dashboard",
+          active: location.pathname === (user.role === 'nailmaster' ? "/master-dashboard" : "/client-dashboard"),
           action: () => {
             if (user.role === 'nailmaster') {
-              navigate(`/master/${user.id}`);
+              navigate("/master-dashboard");
             } else {
-              navigate(`/client-dashboard`);
+              navigate("/client-dashboard");
             }
           }
         });
@@ -131,7 +125,7 @@ const Header = () => {
         // Для гостевых пользователей показываем кнопку входа/регистрации
         items.push({
           icon: User,
-          label: "Войти/Регистрация",
+          label: "Войти",
           path: "/auth",
           active: location.pathname === "/auth",
           action: () => navigate("/auth")
@@ -154,59 +148,109 @@ const Header = () => {
   const navigationItems = getNavigationItems();
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-      <div className="flex items-center justify-between p-4">
-        <h1 
-          className="text-xl font-bold gradient-text cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate("/")}
-        >
-          NailMasters
-        </h1>
+    <>
+      {/* Десктопный хедер */}
+      <header className="fixed top-0 left-0 z-50 w-40 h-screen bg-background/80 backdrop-blur-md border-r border-border hidden md:block">
+        <div className="flex flex-col items-center h-full py-4">
+          {/* Логотип */}
+          <div className="mb-8">
+            <h1 
+              className="text-lg font-bold gradient-text cursor-pointer hover:opacity-80 transition-opacity"
+              style={{
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed'
+              }}
+              onClick={() => navigate("/")}
+            >
+              NM
+            </h1>
+          </div>
         
-        <div className="flex items-center gap-2">
+        {/* Навигация */}
+        <nav className="flex flex-col items-start gap-3 flex-1 w-full px-2">
           {user ? (
             <>
-              {/* Десктопная навигация */}
-              <nav className="hidden md:flex items-center gap-2">
-                {navigationItems.map((item, index) => (
+              {navigationItems.map((item, index) => (
+                <div 
+                  key={`${item.path}-${index}`} 
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={item.action}
+                >
                   <Button
-                    key={`${item.path}-${index}`}
-                    variant={item.active ? "default" : "ghost"}
-                    size="sm"
-                    onClick={item.action}
-                    className="flex items-center gap-2"
-                    title={item.label}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
-                  </Button>
-                ))}
-              </nav>
-
-              {/* Мобильная навигация */}
-              <nav className="md:hidden flex items-center gap-1">
-                {navigationItems.map((item, index) => (
-                  <Button
-                    key={`mobile-${item.path}-${index}`}
                     variant={item.active ? "default" : "ghost"}
                     size="icon"
-                    onClick={item.action}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      item.action();
+                    }}
+                    className="w-10 h-10 rounded-full flex-shrink-0"
                     title={item.label}
                   >
-                    <item.icon className="w-4 h-4" />
+                    <item.icon className="w-5 h-5" />
                   </Button>
-                ))}
-              </nav>
+                  <span 
+                    className={`text-base leading-tight transition-colors ${
+                      item.active 
+                        ? 'text-foreground font-medium' 
+                        : 'text-muted-foreground group-hover:text-foreground'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              ))}
             </>
           ) : (
-            <Button variant="ghost" onClick={() => navigate("/auth")}>
-              Войти
-            </Button>
+            <div 
+              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+              onClick={() => navigate("/auth")}
+            >
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate("/auth");
+                }}
+                className="w-10 h-10 rounded-full flex-shrink-0"
+                title="Войти"
+              >
+                <User className="w-5 h-5" />
+              </Button>
+              <span 
+                className="text-base text-muted-foreground leading-tight transition-colors group-hover:text-foreground"
+              >
+                Войти
+              </span>
+            </div>
           )}
+        </nav>
+
+        {/* Нижние элементы */}
+        <div className="flex flex-col items-center gap-4">
           <ThemeToggle />
         </div>
       </div>
     </header>
+
+      {/* Мобильный хедер снизу */}
+      <header className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-t border-border md:hidden">
+        <nav className="flex items-center justify-around px-4 py-3">
+          {navigationItems.slice(0, 4).map((item, index) => (
+            <Button
+              key={`mobile-nav-${item.path}-${index}`}
+              variant={item.active ? "default" : "ghost"}
+              size="icon"
+              onClick={() => item.action()}
+              className="w-12 h-12 rounded-full"
+              title={item.label}
+            >
+              <item.icon className="w-6 h-6" />
+            </Button>
+          ))}
+        </nav>
+      </header>
+    </>
   );
 };
 

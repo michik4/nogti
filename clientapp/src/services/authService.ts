@@ -188,19 +188,27 @@ class AuthService {
       // Безопасное декодирование base64 с поддержкой UTF-8
       let decodedPayload: string;
       try {
-        // Используем decodeURIComponent для корректной обработки UTF-8 символов
-        const urlSafeBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
-        decodedPayload = atob(urlSafeBase64);
+        decodedPayload = atob(base64);
       } catch (base64Error) {
         console.error('Ошибка декодирования base64:', base64Error);
         // Попробуем альтернативный способ декодирования
         try {
-          decodedPayload = atob(base64);
+          // Используем decodeURIComponent для обработки URL-безопасного base64
+          const urlSafeBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+          decodedPayload = atob(urlSafeBase64);
         } catch (alternativeError) {
           console.error('Альтернативное декодирование также не удалось:', alternativeError);
           this.logout();
           return null;
         }
+      }
+
+      // Декодируем UTF-8 символы
+      try {
+        decodedPayload = decodeURIComponent(escape(decodedPayload));
+      } catch (utf8Error) {
+        console.warn('Ошибка декодирования UTF-8, используем исходную строку:', utf8Error);
+        // Если не удалось декодировать UTF-8, используем исходную строку
       }
 
       // Парсим JSON payload
@@ -213,28 +221,6 @@ class AuthService {
         return null;
       }
 
-      // Проверяем и нормализуем строковые поля для корректной работы с UTF-8
-      if (payload.fullName && typeof payload.fullName === 'string') {
-        // Убеждаемся, что fullName корректно декодирован
-        try {
-          // Проверяем, что строка не содержит некорректных символов
-          // Используем более точную проверку для UTF-8 символов
-          const testString = payload.fullName;
-          const isValidUTF8 = /^[\u0000-\u007F\u0080-\uFFFF]*$/.test(testString);
-          
-          if (!isValidUTF8 || testString.includes('') || testString.includes('')) {
-            console.warn('Обнаружены некорректные символы в fullName, очищаем');
-            payload.fullName = undefined;
-          } else {
-            // Нормализуем Unicode символы
-            payload.fullName = testString.normalize('NFC');
-          }
-        } catch (error) {
-          console.warn('Ошибка обработки fullName:', error);
-          payload.fullName = undefined;
-        }
-      }
-
       return payload;
     } catch (error) {
       console.error('Ошибка декодирования токена:', error);
@@ -245,43 +231,61 @@ class AuthService {
   }
 
   /**
-   * Получение информации о текущем пользователе с сервера
+   * Получение информации о текущем пользователе из токена
    */
-  async getCurrentUser(): Promise<User | null> {
+  getCurrentUser(): User | null {
     try {
-      // Проверяем аутентификацию
-      if (!this.isAuthenticated()) {
-        return null;
-      }
+      const token = this.getToken();
+      if (!token) return null;
 
-      // Получаем данные с сервера
-      const response = await apiService.get<User>('/auth/profile');
-      
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      // Если сервер вернул ошибку, очищаем токены
-      if (response.error) {
-        console.error('Ошибка получения профиля с сервера:', response.error);
+      const payload = this.decodeToken(token);
+      if (!payload) return null;
+
+      // Проверяем наличие обязательных полей
+      if (!payload.userId || !payload.email || !payload.role) {
+        console.error('Токен не содержит обязательные поля');
         this.logout();
         return null;
       }
-      
-      return null;
+
+      // Обрабатываем русские символы в имени
+      const processRussianText = (text: string | undefined): string | undefined => {
+        if (!text) return text;
+        
+        try {
+          // Пытаемся декодировать UTF-8 если текст содержит закодированные символы
+          if (text.includes('%')) {
+            return decodeURIComponent(text);
+          }
+          return text;
+        } catch (error) {
+          console.warn('Ошибка обработки русского текста:', error);
+          return text;
+        }
+      };
+
+      return {
+        id: payload.userId,
+        email: payload.email,
+        username: payload.username || payload.email,
+        role: payload.role as any,
+        fullName: processRussianText(payload.fullName),
+        phone: payload.phone,
+        isGuest: payload.isGuest,
+        avatar: payload.avatar,
+      };
     } catch (error) {
       console.error('Ошибка получения текущего пользователя:', error);
-      // При ошибке сети или сервера очищаем токены
       this.logout();
       return null;
     }
   }
 
   /**
-   * Получение типизированного пользователя с сервера
+   * Получение типизированного пользователя
    */
-  async getCurrentUserTyped(): Promise<Client | Master | Admin | null> {
-    const user = await this.getCurrentUser();
+  getCurrentUserTyped(): Client | Master | Admin | null {
+    const user = this.getCurrentUser();
     if (!user) return null;
 
     switch (user.role) {
@@ -297,69 +301,32 @@ class AuthService {
   }
 
   /**
-   * Проверка роли пользователя (синхронная версия для быстрых проверок)
+   * Проверка роли пользователя
    */
   hasRole(role: string): boolean {
-    const token = this.getToken();
-    if (!token) return false;
-
-    try {
-      const payload = this.decodeToken(token);
-      return payload?.role === role;
-    } catch (error) {
-      console.error('Ошибка проверки роли:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Проверка роли пользователя с сервера (асинхронная версия)
-   */
-  async hasRoleAsync(role: string): Promise<boolean> {
-    const user = await this.getCurrentUser();
+    const user = this.getCurrentUser();
     return user?.role === role;
   }
 
   /**
-   * Проверка, является ли пользователь клиентом (синхронная версия)
+   * Проверка, является ли пользователь клиентом
    */
   isClient(): boolean {
     return this.hasRole('client');
   }
 
   /**
-   * Проверка, является ли пользователь клиентом (асинхронная версия)
-   */
-  async isClientAsync(): Promise<boolean> {
-    return this.hasRoleAsync('client');
-  }
-
-  /**
-   * Проверка, является ли пользователь мастером (синхронная версия)
+   * Проверка, является ли пользователь мастером
    */
   isMaster(): boolean {
     return this.hasRole('nailmaster');
   }
 
   /**
-   * Проверка, является ли пользователь мастером (асинхронная версия)
-   */
-  async isMasterAsync(): Promise<boolean> {
-    return this.hasRoleAsync('nailmaster');
-  }
-
-  /**
-   * Проверка, является ли пользователь администратором (синхронная версия)
+   * Проверка, является ли пользователь администратором
    */
   isAdmin(): boolean {
     return this.hasRole('admin');
-  }
-
-  /**
-   * Проверка, является ли пользователь администратором (асинхронная версия)
-   */
-  async isAdminAsync(): Promise<boolean> {
-    return this.hasRoleAsync('admin');
   }
 
   /**

@@ -1,5 +1,5 @@
 
-import { Clock, Star, AlertCircle } from "lucide-react";
+import { Clock, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,8 +10,7 @@ interface DesignInfoProps {
     image: string;
     category: string;
     difficulty?: string;
-    price?: string;
-    minPrice?: number;
+    price: string;
     duration: string;
     masterName: string;
     masterAvatar?: string;
@@ -24,14 +23,6 @@ interface DesignInfoProps {
  * Показывает детали дизайна и информацию о мастере
  */
 const DesignInfo = ({ design }: DesignInfoProps) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
-
   return (
     <div className="flex gap-4 p-4 border border-border rounded-lg">
       <img 
@@ -63,9 +54,7 @@ const DesignInfo = ({ design }: DesignInfoProps) => {
           )}
         </div>
         <div className="flex items-center gap-4 mt-2">
-          <span className="text-sm text-muted-foreground">
-            Визуальный пример работы мастера
-          </span>
+          <span className="font-bold text-primary">{design.price}</span>
           <span className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
             {design.duration}

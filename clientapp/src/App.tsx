@@ -16,6 +16,7 @@ import { MastersPage } from "./pages/masters";
 import { DesignsPage } from "./pages/designs";
 import "./App.css";
 import { DesignPage } from "./pages/design";
+import Layout from "@/components/Layout";
 
 // Создаем QueryClient
 const queryClient = new QueryClient({
@@ -70,50 +71,57 @@ function App() {
         <Router>
           <ThemeProvider>
             <AuthProvider>
-              <div className="min-h-screen bg-background text-foreground">
-                <Routes>
+              <Routes>
+                {/* Главная страница */}
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                
+                {/* Страница авторизации */}
+                <Route path="/auth" element={<Layout showHeader={false}><Auth /></Layout>} />
 
-                  {/* protected routes */}
-                  <Route
-                    path="/client-dashboard"
-                    element={
-                      <ProtectedRoute requiredRole="client">
+                {/* Защищенные маршруты с хедером */}
+                <Route
+                  path="/client-dashboard"
+                  element={
+                    <ProtectedRoute requiredRole="client">
+                      <Layout>
                         <ClientDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
 
-                  <Route
-                    path="/master-dashboard"
-                    element={
-                      <ProtectedRoute requiredRole="nailmaster">
+                <Route
+                  path="/master-dashboard"
+                  element={
+                    <ProtectedRoute requiredRole="nailmaster">
+                      <Layout>
                         <MasterDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
 
-                  <Route
-                    path="/admin-dashboard"
-                    element={
-                      <ProtectedRoute requiredRole="admin">
+                <Route
+                  path="/admin-dashboard"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <Layout>
                         <AdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
 
-                  {/* public routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/masters" element={<MastersPage />} />
-                  <Route path="/master/:masterId" element={<MasterProfile />} />
-                  <Route path="/designs" element={<DesignsPage />} />
-                  <Route path="/designs/:id" element={<DesignPage />} />
-                  <Route path="*" element={<NotFound />} />
-
-
-                </Routes>
-                <Toaster />
-              </div>
+                {/* Публичные маршруты с хедером */}
+                <Route path="/masters" element={<Layout><MastersPage /></Layout>} />
+                <Route path="/master/:masterId" element={<Layout><MasterProfile /></Layout>} />
+                <Route path="/designs" element={<Layout><DesignsPage /></Layout>} />
+                <Route path="/designs/:id" element={<Layout><DesignPage /></Layout>} />
+                
+                {/* Страница 404 */}
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+              <Toaster />
             </AuthProvider>
           </ThemeProvider>
         </Router>

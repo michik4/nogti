@@ -1,6 +1,3 @@
-import { NailDesign } from "@/services/designService";
-import { Master } from "./user.types";
-
 export interface MasterService {
   id: string;
   name: string;
@@ -19,7 +16,20 @@ export interface MasterServiceDesign {
   additionalDuration?: number;
   notes?: string;
   isActive: boolean;
-  nailDesign: NailDesign;
+  nailDesign: {
+    id: string;
+    title: string;
+    imageUrl: string;
+    description?: string;
+    type: 'basic' | 'designer';
+    tags?: string[];
+    isActive: boolean;
+    isModerated: boolean;
+    likesCount: number;
+    ordersCount: number;
+    estimatedPrice?: number;
+    createdAt?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -121,12 +131,14 @@ export interface MasterDesign {
     title: string;
     imageUrl: string;
     description?: string;
-    minPrice?: number; // Минимальная цена от связанных услуг
+    estimatedPrice?: number;
     type: 'basic' | 'designer';
     tags?: string[];
     isActive: boolean;
     isModerated: boolean;
     createdAt?: string;
+    likesCount?: number;
+    ordersCount?: number;
   };
   customPrice?: number;
   notes?: string;

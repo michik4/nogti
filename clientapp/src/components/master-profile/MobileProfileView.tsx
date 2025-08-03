@@ -20,6 +20,7 @@ import MasterDesigns from "./MasterDesigns";
 import { NailDesign } from "@/services/designService";
 import { masterRating } from "@/types/master-rating.type";
 import { masterRatingService } from "@/services/master-rating.service";
+import MasterAvailability from "./MasterAvailability";
 
 interface MobileProfileViewProps {
   master: MasterProfile;
@@ -207,10 +208,7 @@ const MobileProfileView = ({ master, onBack }: MobileProfileViewProps) => {
           </div>
 
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>Сегодня до 20:00</span>
-            </div>
+            <MasterAvailability masterId={master.id} />
             <div className="flex items-center gap-1">
               <Instagram className="w-4 h-4" />
               <span>@{(master.name || master.fullName || '').toLowerCase().replace(' ', '_')}</span>

@@ -72,7 +72,9 @@ const AvatarUpload = ({
     }
   };
 
-  const handleFileSelect = () => {
+  const handleFileSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     fileInputRef.current?.click();
   };
 
@@ -234,32 +236,7 @@ const AvatarUpload = ({
       </div>
 
       {/* Кнопка загрузки (отдельная для малых размеров или всегда видимая) */}
-      {showUploadButton && (
-        <div className={styles.buttonContainer}>
-          <button
-            onClick={handleFileSelect}
-            disabled={isUploading}
-            className={`${styles.uploadButton} ${getButtonSizeClass()}`}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className={`${getIconSizeClass()} ${styles.loading}`} />
-                Загрузка...
-              </>
-            ) : (
-              <>
-                <Upload className={getIconSizeClass()} />
-                {size === "lg" ? "Изменить аватар" : "Изменить"}
-              </>
-            )}
-          </button>
-          
-          {/* Информационный текст о лимитах файла */}
-          <div className={`${styles.fileInfo} ${styles[size]}`}>
-            📁 До 5 МБ • JPEG, PNG, WebP, GIF
-          </div>
-        </div>
-      )}
+      
 
       {/* Скрытый input для выбора файла */}
       <input

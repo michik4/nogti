@@ -15,6 +15,7 @@ import BookingsTab from "@/components/profile/BookingsTab";
 import FavoritesTab from "@/components/profile/FavoritesTab";
 import UploadsTab from "@/components/profile/UploadsTab";
 import ReviewsTab from "@/components/profile/ReviewsTab";
+import PageHeader from "@/components/PageHeader";
 
 /**
  * Страница профиля пользователя
@@ -37,15 +38,16 @@ const ClientDashboard = () => {
   }, [currentUser, navigate]);
 
   // Обновление профиля при загрузке страницы для получения корректных данных с сервера
-  useEffect(() => {
-    if (currentUser && !isGuest()) {
-      console.log('Обновляем профиль пользователя для получения корректных данных с сервера');
-      refreshUser().catch(error => {
-        console.warn('Не удалось обновить профиль при загрузке страницы:', error);
-        // Не показываем toast, чтобы не мешать пользователю
-      });
-    }
-  }, []); // Выполняем только при первой загрузке
+  // Временно отключено, чтобы избежать перезаписи данных пользователя
+  // useEffect(() => {
+  //   if (currentUser && !isGuest()) {
+  //     console.log('Обновляем профиль пользователя для получения корректных данных с сервера');
+  //     refreshUser().catch(error => {
+  //       console.warn('Не удалось обновить профиль при загрузке страницы:', error);
+  //       // Не показываем toast, чтобы не мешать пользователю
+  //     });
+  //   }
+  // }, []); // Выполняем только при первой загрузке
 
   if (!currentUser) {
     return null;
@@ -73,23 +75,13 @@ const ClientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Заголовок страницы */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-semibold">Профиль клиента</h1>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={() => setIsEditModalOpen(true)}>
-              <Settings className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto p-6 max-w-4xl">
+      <PageHeader
+        title="Личный кабинет"
+        subtitle="Управление профилем и записями"
+        showBackButton={false}
+      />
+      
+      <div className="container mx-auto p-6 max-w-4xl">
         {/* Заголовок профиля */}
         <ProfileHeader 
           onEditProfile={() => setIsEditModalOpen(true)}
@@ -147,7 +139,7 @@ const ClientDashboard = () => {
             </Button>
           </CardContent>
         </Card>
-      </main>
+      </div>
 
       {/* Модальные окна */}
       {!isGuestUser && (

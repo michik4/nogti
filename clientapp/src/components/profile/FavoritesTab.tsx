@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Loader2, Eye } from "lucide-react";
+import { Heart, Loader2, Eye, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { designService, NailDesign } from "@/services/designService";
 import { getImageUrl } from "@/utils/image.util";
 import { useNavigate } from "react-router-dom";
+import { roundPrice } from "@/utils/format.util";
+import { MastersList } from "@/pages/designs/components/MastersList";
+import { Badge } from "@/components/ui/badge";
 
 interface FavoritesTabProps {
   onBookAgain: (designId: string) => void;
@@ -20,6 +23,8 @@ const FavoritesTab = ({ onBookAgain }: FavoritesTabProps) => {
   const [favorites, setFavorites] = useState<NailDesign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMasters, setShowMasters] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<NailDesign | null>(null);
   const { user, isAuthenticated, isGuest } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -98,6 +103,18 @@ const FavoritesTab = ({ onBookAgain }: FavoritesTabProps) => {
     navigate(`/designs/${designId}`);
   };
 
+  // Обработчик поиска мастеров для дизайна
+  const handleFindMasters = (design: NailDesign) => {
+    setSelectedDesign(design);
+    setShowMasters(true);
+  };
+
+  // Обработчик закрытия модалки мастеров
+  const handleCloseMasters = () => {
+    setShowMasters(false);
+    setSelectedDesign(null);
+  };
+
   // Обработчик просмотра всех избранных
   const handleViewAllFavorites = () => {
     // TODO: Можно добавить отдельную страницу для всех избранных
@@ -166,94 +183,109 @@ const FavoritesTab = ({ onBookAgain }: FavoritesTabProps) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Heart className="w-5 h-5" />
-            Избранные дизайны ({favorites.length})
-          </div>
-          {favorites.length > 4 && (
-            <Button size="sm" variant="outline" onClick={handleViewAllFavorites}>
-              Все избранные
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {favorites.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {favorites.map((design) => (
-              <div key={design.id} className="relative group">
-                {/* Изображение дизайна */}
-                <div className="relative overflow-hidden rounded-lg">
-                  <img 
-                                          src={getImageUrl(design.imageUrl) || '/placeholder.svg'} 
-                    alt={design.title}
-                    className="w-full h-32 object-cover transition-transform group-hover:scale-105"
-                  />
-                  
-                  {/* Оверлей с кнопками действий */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="secondary"
-                        onClick={() => handleViewDesign(design.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        onClick={() => onBookAgain(design.id)}
-                      >
-                        Записаться
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => handleRemoveFromFavorites(design.id)}
-                      >
-                        <Heart className="w-4 h-4 fill-current" />
-                      </Button>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Heart className="w-5 h-5" />
+              Избранные дизайны ({favorites.length})
+            </div>
+            {favorites.length > 4 && (
+              <Button size="sm" variant="outline" onClick={handleViewAllFavorites}>
+                Все избранные
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {favorites.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {favorites.map((design) => (
+                <div key={design.id} className="group relative bg-card rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                  {/* Изображение дизайна */}
+                  <div className="relative aspect-square overflow-hidden">
+                    <img 
+                      src={getImageUrl(design.imageUrl) || '/placeholder.svg'} 
+                      alt={design.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    
+                    {/* Градиентный оверлей */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    
+                    {/* Кнопки действий */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={() => handleViewDesign(design.id)}
+                          className="bg-white/90 hover:bg-white text-gray-900"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleFindMasters(design)}
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Users className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => handleRemoveFromFavorites(design.id)}
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                          <Heart className="w-4 h-4 fill-current" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Информация о дизайне */}
-                <div className="mt-2">
-                  <h4 className="font-medium text-sm line-clamp-1">{design.title}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {design.type === 'designer' ? 'Дизайнерский' : 'Базовый'}
-                  </p>
-                  {design.minPrice && (
-                    <p className="text-xs font-semibold text-primary">
-                      от {design.minPrice} ₽
-                    </p>
-                  )}
-                  <div className="flex items-center gap-1 mt-1">
-                    <Heart className="w-3 h-3 text-red-500" />
-                    <span className="text-xs text-muted-foreground">
-                      {design.likesCount}
-                    </span>
+                  
+                  {/* Информация о дизайне */}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-semibold text-sm line-clamp-2 leading-tight">
+                        {design.title}
+                      </h4>
+                      
+                    </div>
+                    
+                    
+                    
+                    
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Heart className="w-8 h-8 text-muted-foreground" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              У вас пока нет избранных дизайнов
-            </p>
-            <Button onClick={() => navigate("/designs")} variant="outline">
-              Найти дизайны
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <h3 className="text-lg font-semibold mb-2">Нет избранных дизайнов</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Добавляйте понравившиеся дизайны в избранное, чтобы быстро находить их позже
+              </p>
+              <Button onClick={() => navigate("/designs")} variant="outline" size="lg">
+                Найти дизайны
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Модальное окно со списком мастеров */}
+      {selectedDesign && (
+        <MastersList
+          design={selectedDesign}
+          isOpen={showMasters}
+          onClose={handleCloseMasters}
+        />
+      )}
+    </>
   );
 };
 

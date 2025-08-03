@@ -22,6 +22,7 @@ import { masterRatingService } from "@/services/master-rating.service";
 import styles from './DesktopProfileView.module.css';
 import { formatCustomDate } from "@/utils/time.util";
 import { ReviewsSummary } from "../ReviewsSummary";
+import MasterAvailability from "./MasterAvailability";
 
 interface DesktopProfileViewProps {
   master: MasterProfile;
@@ -131,21 +132,7 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
   const canBook = !isAuthenticated || isClient() || isGuest();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-semibold">{master.name || master.fullName}</h1>
-          <Button variant="ghost" size="icon">
-            <Share className="w-5 h-5" />
-          </Button>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="max-w-7xl mx-auto px-6">
         {/* Уведомление для гостей */}
         {isGuest() && (
           <div className="mt-6 mb-6">
@@ -180,29 +167,21 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
                     </button>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                    <MapPin className="w-5 h-5" />
-                    <span>{master.location || master.address}</span>
+                    {master.location && (
+                      <>
+                        <MapPin className="w-5 h-5" />
+                        <span>{master.location || master.address}</span>
+                      </>
+                    )}
+                    {master.address && (
+                      <>
+                        <MapPin className="w-5 h-5" />
+                        <span>{master.address}</span>
+                      </>
+                    )}
                   </div>
 
-                  <div className="flex flex-col gap-3">
-                    {canBook && (
-                      <Button
-                        className="gradient-bg text-white relative z-10"
-                        onClick={handleBookingClick}
-                        disabled={false}
-                      >
-                        <Calendar className="w-5 h-5 mr-2" />
-                        Записаться
-                      </Button>
-                    )}
-                    <Button variant="outline">
-                      <MessageCircle className="w-5 h-5 mr-2" />
-                      Сообщение
-                    </Button>
-                    <Button variant="outline">
-                      <Phone className="w-5 h-5" />
-                    </Button>
-                  </div>
+                  
                 </div>
               </div>
 
@@ -219,14 +198,8 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
               </div>
 
               <div className="flex items-center justify-between text-muted-foreground mb-6">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  <span>Сегодня до 20:00</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Instagram className="w-5 h-5" />
-                  <span>@{(master.name || master.fullName || '').toLowerCase().replace(' ', '_')}</span>
-                </div>
+                <MasterAvailability masterId={master.id} />
+                
               </div>
 
               {/* Reviews Summary - ИНТЕГРАЦИЯ НОВОГО КОМПОНЕНТА */}
@@ -313,56 +286,43 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
         </div>
 
         {/* Bottom CTA for Desktop */}
-        {canBook && (
-          <div className="sticky bottom-0 bg-background border-t border-border p-6 mt-8">
-            <div className="max-w-md mx-auto">
-              <Button
-                className="w-full gradient-bg text-white font-semibold text-lg py-3"
-                onClick={handleBookingClick}
-              >
-                <Calendar className="w-5 h-5 mr-2" />
-                Записаться на {master.price}
-              </Button>
-            </div>
-          </div>
+        
+
+        {/* Modals */}
+        <ReviewsModal
+          isOpen={showReviews}
+          onClose={() => setShowReviews(false)}
+          master={master}
+          onReviewsUpdate={handleReviewsUpdate}
+        />
+
+        <BookingModal
+          isOpen={showBooking}
+          onClose={() => {
+            setShowBooking(false);
+            setSelectedService(null);
+          }}
+          service={selectedService}
+          masterId={master.id}
+        />
+
+        {selectedDesign && (
+          <PhotoGalleryModal
+            isOpen={showGallery}
+            onClose={() => {
+              setShowGallery(false);
+              setSelectedDesign(null);
+            }}
+            images={[
+              'nailDesign' in selectedDesign
+                                    ? getImageUrl(selectedDesign.nailDesign.imageUrl) || '/placeholder.svg'
+                  : getImageUrl(selectedDesign.imageUrl) || '/placeholder.svg'
+            ]}
+            initialIndex={0}
+          />
         )}
       </div>
-
-      {/* Modals */}
-      <ReviewsModal
-        isOpen={showReviews}
-        onClose={() => setShowReviews(false)}
-        master={master}
-        onReviewsUpdate={handleReviewsUpdate}
-      />
-
-      <BookingModal
-        isOpen={showBooking}
-        onClose={() => {
-          setShowBooking(false);
-          setSelectedService(null);
-        }}
-        service={selectedService}
-        masterId={master.id}
-      />
-
-      {selectedDesign && (
-        <PhotoGalleryModal
-          isOpen={showGallery}
-          onClose={() => {
-            setShowGallery(false);
-            setSelectedDesign(null);
-          }}
-          images={[
-            'nailDesign' in selectedDesign
-                              ? getImageUrl(selectedDesign.nailDesign.imageUrl) || '/placeholder.svg'
-                : getImageUrl(selectedDesign.imageUrl) || '/placeholder.svg'
-          ]}
-          initialIndex={0}
-        />
-      )}
-    </div>
-  );
-};
+    );
+  };
 
 export default DesktopProfileView;

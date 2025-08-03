@@ -124,7 +124,7 @@ const EditServiceDesignModal = ({
             />
             <p className="text-xs text-muted-foreground">
               {formData.customPrice === baseServicePrice 
-                ? 'Используется базовая цена услуги'
+                ? 'Введите цену доплаты за дизайн'
                 : `${formData.customPrice > baseServicePrice ? 'Доплата' : 'Скидка'}: ${Math.abs(formData.customPrice - baseServicePrice)}₽`
               }
             </p>

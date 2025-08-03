@@ -52,21 +52,6 @@
   color: var(--foreground);
 }
 
-.noServicesInfo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--muted);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.noServicesText {
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
-}
-
 .colorInfo {
   display: flex;
   align-items: center;
@@ -122,4 +107,49 @@
 .sourceBadge {
   background: var(--accent);
   color: var(--accent-foreground);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.mastersButton {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-foreground) 100%);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.mastersButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.masterActions {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.addToServicesButton {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-foreground) 100%);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.addToServicesButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.addToServicesButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 } 

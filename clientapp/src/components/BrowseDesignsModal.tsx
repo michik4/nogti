@@ -1,22 +1,23 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, X, Plus } from "lucide-react";
+import { X, Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { designService, NailDesign, GetDesignsParams } from "@/services/designService";
+import { Badge } from "@/components/ui/badge";
+import { masterService } from "@/services/masterService";
 import { getImageUrl } from "@/utils/image.util";
 import { toast } from "sonner";
+import { roundPrice } from "@/utils/format.util";
+import { useNavigate } from "react-router-dom";
 
 interface BrowseDesignsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectDesign: (design: NailDesign) => void;
+  onSelectDesign: (design: any) => void; // Изменяем тип на any, так как это MasterDesign
   serviceId: string;
   serviceName: string;
   servicePrice: number;
+  masterId?: string; // Добавляем ID мастера
 }
 
 const BrowseDesignsModal = ({ 
@@ -25,71 +26,60 @@ const BrowseDesignsModal = ({
   onSelectDesign, 
   serviceId, 
   serviceName, 
-  servicePrice 
+  servicePrice,
+  masterId 
 }: BrowseDesignsModalProps) => {
-  const [designs, setDesigns] = useState<NailDesign[]>([]);
+  const [designs, setDesigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<GetDesignsParams>({
-    page: 1,
-    limit: 12,
-    type: undefined,
-    source: undefined,
-    includeOwn: true // Показываем свои дизайны мастеру
-  });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    totalPages: 1,
-    total: 0
-  });
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
       fetchDesigns();
     }
-  }, [isOpen, filters, searchQuery]);
+  }, [isOpen]);
 
   const fetchDesigns = async () => {
     try {
       setLoading(true);
       
-      let response;
-      if (searchQuery.trim()) {
-        response = await designService.searchDesigns(searchQuery, filters);
-      } else {
-        response = await designService.getAllDesigns(filters);
+      if (!masterId) {
+        console.error('ID мастера не найден');
+        toast.error('Ошибка: ID мастера не найден');
+        setDesigns([]);
+        return;
       }
+      
+      // Используем getAllMasterDesigns для получения всех дизайнов мастера
+      const response = await masterService.getAllMasterDesigns(masterId);
 
-      if (response.success && response.data) {
-        setDesigns(response.data || []);
-        setPagination(response.pagination || { page: 1, totalPages: 1, total: 0 });
+      if (response && Array.isArray(response)) {
+        // Преобразуем ответ в формат MasterDesign для совместимости
+        const masterDesigns = response.map((design: any) => ({
+          id: design.id,
+          nailDesign: design,
+          isActive: design.isActive !== false,
+          customPrice: design.minPrice || 0,
+          estimatedDuration: 60,
+          addedAt: design.createdAt || new Date().toISOString()
+        }));
+        setDesigns(masterDesigns);
+      } else {
+        setDesigns([]);
       }
     } catch (error) {
       console.error('Ошибка загрузки дизайнов:', error);
-      toast.error('Не удалось загрузить дизайны');
+      toast.error('Не удалось загрузить ваши дизайны');
+      setDesigns([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    setFilters(prev => ({ ...prev, page: 1 }));
-  };
-
-  const handleFilterChange = (key: keyof GetDesignsParams, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
-  };
-
-  const handleSelectDesign = (design: NailDesign) => {
-    onSelectDesign(design);
+  const handleSelectDesign = (masterDesign: any) => {
+    // Передаем nailDesign из masterDesign
+    onSelectDesign(masterDesign.nailDesign);
     onClose();
-  };
-
-  const loadMore = () => {
-    if (pagination.page < pagination.totalPages) {
-      setFilters(prev => ({ ...prev, page: prev.page! + 1 }));
-    }
   };
 
   return (
@@ -103,50 +93,6 @@ const BrowseDesignsModal = ({
             </Button>
           </DialogTitle>
         </DialogHeader>
-
-        {/* Поиск и фильтры */}
-        <div className="space-y-4 pb-4 border-b">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Поиск дизайнов..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <Select
-              value={filters.type || "all"}
-              onValueChange={(value) => handleFilterChange('type', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Тип дизайна" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все типы</SelectItem>
-                <SelectItem value="basic">Базовый</SelectItem>
-                <SelectItem value="designer">Дизайнерский</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.source || "all"}
-              onValueChange={(value) => handleFilterChange('source', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Источник" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все источники</SelectItem>
-                <SelectItem value="admin">Администратор</SelectItem>
-                <SelectItem value="client">Клиенты</SelectItem>
-                <SelectItem value="master">Мастера</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
 
         {/* Список дизайнов */}
         <div className="flex-1 overflow-y-auto">
@@ -162,82 +108,80 @@ const BrowseDesignsModal = ({
             </div>
           ) : designs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {designs.map((design) => (
-                <Card key={design.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer group">
-                  <div className="aspect-square relative overflow-hidden rounded-lg mb-3">
-                    <img 
-                      src={getImageUrl(design.imageUrl) || '/placeholder.svg'} 
-                      alt={design.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <Button
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleSelectDesign(design)}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Добавить
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm line-clamp-2">{design.title}</h4>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={design.type === 'designer' ? 'default' : 'secondary'} className="text-xs">
-                          {design.type === 'designer' ? 'Дизайнерский' : 'Базовый'}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {design.source === 'admin' ? 'Админ' : design.source === 'client' ? 'Клиент' : 'Мастер'}
-                        </Badge>
+              {designs.map((masterDesign) => {
+                const design = masterDesign.nailDesign;
+                return (
+                  <Card key={masterDesign.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer group">
+                    <div className="aspect-square relative overflow-hidden rounded-lg mb-3">
+                      <img 
+                        src={getImageUrl(design.imageUrl) || '/placeholder.svg'} 
+                        alt={design.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <Button
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleSelectDesign(masterDesign)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Добавить
+                        </Button>
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        ❤️ {design.likesCount} 📋 {design.ordersCount}
-                      </span>
-                      <span className="font-semibold text-primary">
-                        {design.minPrice ? `от ${design.minPrice}₽` : "Нет услуг"}
-                      </span>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm line-clamp-2">{design.title}</h4>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={design.type === 'designer' ? 'default' : 'secondary'} className="text-xs">
+                            {design.type === 'designer' ? 'Дизайнерский' : 'Базовый'}
+                          </Badge>
+                          {design.uploadedByMaster?.id ? (
+                            <Badge variant="default" className="text-xs">
+                              Создан мной
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              Добавлен
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          ❤️ {design.likesCount} 📋 {design.ordersCount}
+                        </span>
+                        
+                      </div>
+                      
+                      
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Дизайны не найдены</p>
+              <p className="text-muted-foreground">У вас пока нет дизайнов</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Попробуйте изменить параметры поиска
+                Создайте дизайны или добавьте существующие в список "Я так могу"
               </p>
-            </div>
-          )}
-
-          {/* Кнопка "Загрузить еще" */}
-          {pagination.page < pagination.totalPages && (
-            <div className="text-center mt-6">
-              <Button 
-                variant="outline" 
-                onClick={loadMore}
-                disabled={loading}
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => navigate('/designs')}
               >
-                {loading ? 'Загрузка...' : 'Загрузить еще'}
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Перейти к дизайнам
               </Button>
             </div>
           )}
         </div>
 
-        {/* Информация о ценообразовании */}
-        <div className="border-t pt-4">
-          <p className="text-sm text-muted-foreground">
-            💡 <strong>Ценообразование:</strong> Если у дизайна нет указанной цены, будет использована цена услуги ({servicePrice}₽). 
-            Вы сможете установить индивидуальную цену после добавления.
-          </p>
-        </div>
+        
       </DialogContent>
     </Dialog>
   );

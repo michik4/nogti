@@ -1,0 +1,497 @@
+/* TikTok Style Home */
+.designCard {
+  width: 55vh;
+  height: 95vh;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.imageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  color: white;
+  z-index: 10;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  flex: 1;
+  margin-right: 12px;
+}
+
+.typeBadge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tag {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.colorInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.colorSwatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.colorText {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.sideActions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  
+}
+
+.actionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.sideActionButton {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.sideActionButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.sideActionButton:active {
+  transform: scale(0.95);
+}
+
+.addedButton {
+  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.addedButton:hover {
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.actionLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.bottomActions {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 20;
+}
+
+.detailsButton {
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-radius: 50px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.detailsButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.navigationButtons {
+  position: fixed;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 30;
+}
+
+.navButton {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.navButton svg {
+  width: 35px !important;
+  height: 35px !important;
+}
+
+.navButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.navButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.designCard {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .designCard {
+    width: 600px;
+    height: 70vh;
+  }
+  
+  .sideActionButton {
+    width: 56px !important;
+    height: 56px !important;
+  }
+  
+  .navButton svg {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  
+  .actionLabel {
+    font-size: 0.65rem;
+  }
+  
+  .tags {
+    gap: 4px;
+  }
+  
+  .tag {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  .designCard {
+    width: 100vw !important;
+    height: 90vh !important;
+    border-radius: 0;
+    position: relative;
+    overflow: visible;
+    margin-top: 0;
+  }
+  
+  .content {
+    padding: 16px;
+    padding-bottom: 80px; /* Место для кнопок действий на десктопе */
+  }
+  
+  /* На мобильных убираем отступ снизу */
+  .content {
+    padding: 20px;
+    padding-bottom: 20px;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  /* Скрываем боковые кнопки действий на мобильных */
+  .sideActions {
+    display: none !important;
+  }
+  
+  /* Скрываем кнопки навигации на мобильных */
+  .navigationButtons {
+    display: none !important;
+  }
+  
+  /* Мобильные кнопки действий внутри карточки */
+  .mobileActions {
+    position: absolute;
+    right: 20px;
+    bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10;
+  }
+  
+  .tags {
+    gap: 3px;
+    margin-bottom: 8px;
+  }
+  
+  .tag {
+    font-size: 0.65rem;
+    padding: 1px 3px;
+  }
+  
+  .colorInfo {
+    margin-bottom: 8px;
+  }
+  
+  .colorSwatch {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .colorText {
+    font-size: 0.7rem;
+  }
+  
+  .bottomActions {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .designCard {
+    width: 100%;
+    max-width: 400px;
+    height: 80vh;
+    border-radius: 0;
+  }
+  
+  .content {
+    padding: 16px;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .sideActions {
+    gap: 16px;
+    justify-content: flex-end;
+    height: 100%;
+  }
+  
+  .actionItem {
+    gap: 4px;
+  }
+  
+  .sideActionButton {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .actionLabel {
+    font-size: 0.6rem;
+  }
+  
+  /* Скрываем только цвет и тип дизайна на мобильных */
+  .colorInfo {
+    display: none !important;
+  }
+  
+  .colorSwatch {
+    display: none !important;
+  }
+  
+  .colorText {
+    display: none !important;
+  }
+  
+  .typeBadge {
+    display: none !important;
+  }
+  
+  /* Адаптируем теги для мобильных */
+  .tags {
+    gap: 4px;
+    margin-bottom: 8px;
+    margin-right: 80px; /* Отступ справа для кнопок */
+  }
+  
+  .tag {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
+  
+  .bottomActions {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+  }
+  
+  .navigationButtons {
+    right: 20px;
+  }
+  
+  .navButton {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .navButton svg {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+/* Плавный скролл */
+.snap-y {
+  scroll-snap-type: y mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* Кастомный скроллбар */
+.snap-y::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+.snap-y::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.snap-y::-webkit-scrollbar-thumb {
+  background: transparent;
+} 

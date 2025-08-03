@@ -9,13 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import Header from '@/components/Header';
+import PageHeader from '@/components/PageHeader';
+
 import DesignGallery from './components/DesignGallery';
 import DesignInfo from './components/DesignInfo';
 import DesignActions from './components/DesignActions';
 import MasterInfo from './components/MasterInfo';
 import styles from './design.page.module.css';
-import { AlertCircle } from 'lucide-react';
 
 const DesignPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -38,9 +38,7 @@ const DesignPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background text-foreground">
-                <Header />
-                <div className={styles.container}>
+            <div className={styles.container}>
                     <div className={styles.header}>
                         <Skeleton className="h-8 w-8" />
                         <Skeleton className="h-8 w-64" />
@@ -63,79 +61,12 @@ const DesignPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-background text-foreground">
-                <Header />
-                <div className={styles.container}>
-                    <div className={styles.header}>
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate(-1)}
-                            className={styles.backButton}
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Назад
-                        </Button>
-                    </div>
-                    
-                    <Card className={styles.errorCard}>
-                        <CardContent className="p-6 text-center">
-                            <h2 className="text-xl font-semibold mb-2">Ошибка загрузки</h2>
-                            <p className="text-muted-foreground mb-4">
-                                Не удалось загрузить информацию о дизайне
-                            </p>
-                            <Button onClick={() => navigate('/')}>
-                                На главную
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        );
-    }
-
-    if (!design?.data) {
-        return (
-            <div className="min-h-screen bg-background text-foreground">
-                <Header />
-                <div className={styles.container}>
-                    <div className={styles.header}>
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate(-1)}
-                            className={styles.backButton}
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Назад
-                        </Button>
-                    </div>
-                    
-                    <Card className={styles.errorCard}>
-                        <CardContent className="p-6 text-center">
-                            <h2 className="text-xl font-semibold mb-2">Дизайн не найден</h2>
-                            <p className="text-muted-foreground mb-4">
-                                Запрашиваемый дизайн не существует или был удален
-                            </p>
-                            <Button onClick={() => navigate('/')}>
-                                На главную
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        );
-    }
-
-    const designData = design.data;
-
-    return (
-        <div className="min-h-screen bg-background text-foreground">
-            <Header />
             <div className={styles.container}>
                 <div className={styles.header}>
                     <Button
@@ -146,28 +77,63 @@ const DesignPage: React.FC = () => {
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Назад
                     </Button>
-                    
-                    <div className={styles.headerInfo}>
-                        <h1 className={styles.title}>{designData.title}</h1>
-                        <div className={styles.badges}>
-                            <Badge variant="outline" className={styles.typeBadge}>
-                                {designData.type === 'basic' ? 'Базовый' : 'Дизайнерский'}
-                            </Badge>
-                            {designData.tags?.map((tag, index) => (
-                                <Badge key={index} variant="secondary">
-                                    {tag}
-                                </Badge>
-                            ))}
-                            {!isAuthenticated && (
-                                <Badge variant="outline" className={styles.guestBadge}>
-                                    👋 Гостевой режим
-                                </Badge>
-                            )}
-                        </div>
-                    </div>
                 </div>
+                
+                <Card className={styles.errorCard}>
+                    <CardContent className="p-6 text-center">
+                        <h2 className="text-xl font-semibold mb-2">Ошибка загрузки</h2>
+                        <p className="text-muted-foreground mb-4">
+                            Не удалось загрузить информацию о дизайне
+                        </p>
+                        <Button onClick={() => navigate('/')}>
+                            На главную
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
-                <div className={styles.content}>
+    if (!design?.data) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.header}>
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
+                        className={styles.backButton}
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Назад
+                    </Button>
+                </div>
+                
+                <Card className={styles.errorCard}>
+                    <CardContent className="p-6 text-center">
+                        <h2 className="text-xl font-semibold mb-2">Дизайн не найден</h2>
+                        <p className="text-muted-foreground mb-4">
+                            Запрашиваемый дизайн не существует или был удален
+                        </p>
+                        <Button onClick={() => navigate('/')}>
+                            На главную
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    const designData = design.data;
+
+    return (
+        <div className={styles.container}>
+            <PageHeader
+                title={designData.title}
+                subtitle={`${designData.type === 'basic' ? 'Базовый' : 'Дизайнерский'} дизайн`}
+                onBackClick={() => navigate(-1)}
+            />
+
+            <div className={styles.content}>
                     <div className={styles.gallery}>
                         <DesignGallery 
                             imageUrl={designData.imageUrl}
@@ -198,25 +164,11 @@ const DesignPage: React.FC = () => {
                         )}
                         <DesignInfo design={designData} />
                         <DesignActions design={designData} />
-                        {mastersData?.data && mastersData.data.length > 0 ? (
-                            <MasterInfo masters={mastersData.data} designId={designData.id} />
-                        ) : (
-                            <Card className="mt-4">
-                                <CardContent className="p-6 text-center">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <AlertCircle className="w-8 h-8 text-amber-500" />
-                                        <h3 className="text-lg font-semibold">Пока нет мастеров</h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Мастера еще не добавили этот дизайн к своим услугам
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                        
                     </div>
                 </div>
             </div>
-        </div>
+        
     );
 };
 

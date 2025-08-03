@@ -51,23 +51,41 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
 
   if (!currentUser) return null;
 
+  // Функция для обработки русского текста
+  const processRussianText = (text: string | undefined): string => {
+    if (!text) return '';
+    
+    try {
+      // Пытаемся декодировать UTF-8 если текст содержит закодированные символы
+      if (text.includes('%')) {
+        return decodeURIComponent(text);
+      }
+      return text;
+    } catch (error) {
+      console.warn('Ошибка обработки русского текста:', error);
+      return text;
+    }
+  };
+
   // Улучшенная логика получения имени пользователя с приоритетом серверных данных
   const displayName = (() => {
     // Для гостевых пользователей используем name
     if (isGuestUser && 'name' in currentUser) {
-      return currentUser.name;
+      return processRussianText(currentUser.name);
     }
     
     // Для авторизованных пользователей приоритет у fullName
     if ('fullName' in currentUser && currentUser.fullName) {
-      console.log('Используется fullName из профиля:', currentUser.fullName);
-      return currentUser.fullName;
+      const processedName = processRussianText(currentUser.fullName);
+      console.log('Используется fullName из профиля:', processedName);
+      return processedName;
     }
     
     // Fallback на name
     if ('name' in currentUser && currentUser.name) {
-      console.log('Используется name из профиля:', currentUser.name);
-      return currentUser.name;
+      const processedName = processRussianText(currentUser.name);
+      console.log('Используется name из профиля:', processedName);
+      return processedName;
     }
     
     // Последний fallback на email
@@ -84,7 +102,7 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
             currentAvatar={currentUser.avatar}
             userName={displayName}
             size="lg"
-            showUploadButton={!isGuestUser}
+            showUploadButton={false}
             className="self-center md:self-start"
             onAvatarUpdate={(newAvatarUrl) => {
               // Callback уже обрабатывается внутри AvatarUpload через updateUser
@@ -137,45 +155,8 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
             </div>
           </div>
           
-          {/* Статистика для клиентов */}
-          {isClientUser && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center min-w-[300px]">
-              <div>
-                <div className="text-2xl font-bold">{(currentUser as Client).totalBookings || 0}</div>
-                <div className="text-sm text-muted-foreground">Записей</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{(currentUser as Client).favoriteCount || 0}</div>
-                <div className="text-sm text-muted-foreground">Избранное</div>
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1">
-                  {isLoadingStats ? (
-                    <Skeleton className="h-8 w-8" />
-                  ) : (
-                    <>
-                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-2xl font-bold">{clientStats?.totalReviews || 0}</span>
-                    </>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">Отзывов</div>
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1">
-                  {isLoadingStats ? (
-                    <Skeleton className="h-8 w-12" />
-                  ) : (
-                    <>
-                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      <span className="text-2xl font-bold">{clientStats?.averageRatingGiven?.toFixed(1) || '0.0'}</span>
-                    </>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">Ср. оценка</div>
-              </div>
-            </div>
-          )}
+          
+          
         </div>
       </CardContent>
     </Card>

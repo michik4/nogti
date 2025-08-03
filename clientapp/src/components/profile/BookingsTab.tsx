@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { orderService } from "@/services/orderService";
 import { Order, OrderStatus } from "@/types/booking.types";
 import { getImageUrl } from "@/utils/image.util";
+import { roundPrice } from "@/utils/format.util";
 import { 
   getOrderStatusColor, 
   getOrderStatusText, 
@@ -17,7 +18,6 @@ import {
   canAcceptProposedTime,
   canBookAgain,
   formatOrderDate,
-  formatOrderPrice
 } from "@/utils/order.util";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 
@@ -307,7 +307,7 @@ const BookingsTab: React.FC<BookingsTabProps> = ({ onBookAgain }) => {
                           ? `Предложено: ${formatOrderDate(order.proposedDateTime)}`
                           : order.confirmedDateTime
                           ? `Подтверждено: ${formatOrderDate(order.confirmedDateTime)}`
-                          : `Запрошено: ${formatOrderDate(order.requestedDateTime)}`
+                          : `Запись на: ${formatOrderDate(order.requestedDateTime)}`
                         }
                       </span>
                     </div>
@@ -329,7 +329,7 @@ const BookingsTab: React.FC<BookingsTabProps> = ({ onBookAgain }) => {
                   {/* Цена и действия */}
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-primary">
-                      {formatOrderPrice(order.price)}
+                      {roundPrice(order.price)} ₽
                     </span>
                     
                     <div className="flex items-center gap-2">
@@ -370,19 +370,7 @@ const BookingsTab: React.FC<BookingsTabProps> = ({ onBookAgain }) => {
                         </Button>
                       )}
                       
-                      {/* Записаться снова */}
-                      {canBookAgain(order.status) && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleBookAgain(order);
-                          }}
-                        >
-                          Снова
-                        </Button>
-                      )}
+                      
                     </div>
                   </div>
                 </div>

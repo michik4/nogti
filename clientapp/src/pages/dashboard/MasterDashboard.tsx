@@ -23,6 +23,7 @@ import { designService, NailDesign } from "@/services/designService";
 import MasterOrdersTab from "./components/MasterOrdersTab";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import { getImageUrl } from "@/utils/image.util";
+import PageHeader from "@/components/PageHeader";
 import ScheduleManager from "@/components/ScheduleManager";
 
 const MasterDashboard = () => {
@@ -44,15 +45,11 @@ const MasterDashboard = () => {
   const [selectedService, setSelectedService] = useState<MasterService | null>(null);
   const [selectedServiceDesign, setSelectedServiceDesign] = useState<MasterServiceDesign | null>(null);
   const [serviceDesigns, setServiceDesigns] = useState<{ [serviceId: string]: MasterServiceDesign[] }>({});
+  const [masterProfile, setMasterProfile] = useState<Master | null>(null);
   const [isScheduleManagerOpen, setIsScheduleManagerOpen] = useState(false);
-  
+
   useEffect(() => {
     if (isAuthLoading) return;
-
-    if (!currentUser || !isMaster()) {
-      navigate('/auth');
-      return;
-    }
 
     const fetchMasterData = async () => {
       try {
@@ -65,14 +62,18 @@ const MasterDashboard = () => {
 
         console.log('Начало загрузки данных для мастера:', currentUser.id);
         
+        // Загружаем профиль мастера
+        const profileData = await masterService.getMasterProfile(currentUser.id);
+        setMasterProfile(profileData);
+        
         const [servicesData, designsResponse, statsData] = await Promise.all([
           masterService.getMasterServices(currentUser.id).catch(error => {
             console.error('Ошибка загрузки услуг:', error);
             return [];
           }),
-          designService.getMasterDesigns(currentUser.id).catch(error => {
+          masterService.getAllMasterDesigns(currentUser.id).catch(error => {
             console.error('Ошибка загрузки дизайнов:', error);
-            return { success: false, data: [], error: 'Ошибка загрузки дизайнов' };
+            return [];
           }),
           masterService.getMasterStats().catch(error => {
             console.error('Ошибка загрузки статистики:', error);
@@ -109,14 +110,14 @@ const MasterDashboard = () => {
         setServiceDesigns(serviceDesignsData);
 
         // Устанавливаем дизайны
-        if (designsResponse.success && designsResponse.data) {
-          const masterDesigns: MasterDesign[] = designsResponse.data.map(design => ({
+        if (designsResponse && Array.isArray(designsResponse)) {
+          const masterDesigns: MasterDesign[] = designsResponse.map((design: any) => ({
             id: design.id,
             nailDesign: design,
-            isActive: design.isActive,
+            isActive: design.isActive !== false, // По умолчанию активен
             customPrice: design.minPrice || 0,
-            estimatedDuration: 60, // значение по умолчанию
-            addedAt: design.createdAt
+            estimatedDuration: 60, // По умолчанию
+            addedAt: design.createdAt || new Date().toISOString()
           }));
           setDesigns(masterDesigns);
         }
@@ -148,7 +149,23 @@ const MasterDashboard = () => {
     return null;
   }
 
-  const masterData = currentUser as Master;
+  const masterData = masterProfile || currentUser as Master;
+
+  // Функция для обработки русского текста
+  const processRussianText = (text: string | undefined): string => {
+    if (!text) return '';
+    
+    try {
+      // Пытаемся декодировать UTF-8 если текст содержит закодированные символы
+      if (text.includes('%')) {
+        return decodeURIComponent(text);
+      }
+      return text;
+    } catch (error) {
+      console.warn('Ошибка обработки русского текста:', error);
+      return text;
+    }
+  };
 
   const handleEditProfile = () => {
     setIsEditProfileOpen(true);
@@ -285,11 +302,7 @@ const MasterDashboard = () => {
     }
   };
 
-  const handleCreateDesign = async (designData: any, serviceId?: string, serviceDesignData?: {
-    customPrice?: number;
-    additionalDuration?: number;
-    notes?: string;
-  }) => {
+  const handleCreateDesign = async (designData: any, serviceId?: string) => {
     try {
         const response = await designService.createNailDesign({
             ...designData,
@@ -312,12 +325,13 @@ const MasterDashboard = () => {
                 toast.error('Услуга не найдена');
                 return;
             }
+            const finalPrice = designData.estimatedPrice || selectedServiceData.price;
             
             try {
                 console.log('Добавляем дизайн к услуге:', {
                     serviceId: selectedServiceData.id,
                     designId: response.data.id,
-                    serviceDesignData
+                    finalPrice
                 });
                 
                 if (!selectedServiceData.id) {
@@ -332,9 +346,9 @@ const MasterDashboard = () => {
                     selectedServiceData.id,
                     response.data.id,
                     {
-                        customPrice: serviceDesignData?.customPrice || 0,
-                        additionalDuration: serviceDesignData?.additionalDuration || 0,
-                        notes: serviceDesignData?.notes || `Новый дизайн создан для услуги "${selectedServiceData.name}"`
+                        customPrice: finalPrice,
+                        additionalDuration: 0,
+                        notes: `Новый дизайн создан для услуги "${selectedServiceData.name}"`
                     }
                 );
 
@@ -347,14 +361,7 @@ const MasterDashboard = () => {
                     [selectedServiceData.id]: updatedDesigns
                 }));
                 
-                const priceText = serviceDesignData?.customPrice && serviceDesignData.customPrice > 0 
-                  ? ` за ${serviceDesignData.customPrice}₽` 
-                  : '';
-                const timeText = serviceDesignData?.additionalDuration && serviceDesignData.additionalDuration > 0 
-                  ? ` (+${serviceDesignData.additionalDuration} мин)` 
-                  : '';
-                
-                toast.success(`Дизайн создан и добавлен к услуге "${selectedServiceData.name}"${priceText}${timeText}`);
+                toast.success(`Дизайн создан и добавлен к услуге "${selectedServiceData.name}" за ${finalPrice}₽`);
                 setIsAddDesignOpen(false);
                 // Обновляем список дизайнов во вкладке "Мои дизайны"
                 await refreshMasterDesigns();
@@ -422,9 +429,29 @@ const MasterDashboard = () => {
 
   const handleUpdateDesign = async (designId: string, updates: any) => {
     try {
-      const updatedDesign = await masterService.updateMasterDesign(designId, updates);
+      // Находим дизайн в списке
+      const design = safeDesigns.find(d => d.nailDesign.id === designId);
+      
+      if (!design) {
+        toast.error('Дизайн не найден');
+        return;
+      }
+
+      // Проверяем, является ли дизайн созданным мастером
+      const isCreatedByMaster = design.nailDesign?.uploadedByMaster?.id === currentUser?.id;
+      
+      let updatedDesign;
+      if (isCreatedByMaster) {
+        // Для созданных дизайнов - используем designService
+        const response = await designService.updateDesign(designId, updates);
+        updatedDesign = response.data;
+      } else {
+        // Для добавленных дизайнов - используем masterService
+        updatedDesign = await masterService.updateMasterDesign(designId, updates);
+      }
+      
       setDesigns(safeDesigns.map(design => 
-        design.id === designId ? updatedDesign : design
+        design.nailDesign.id === designId ? { ...design, ...updatedDesign } : design
       ));
       toast.success('Дизайн обновлен');
     } catch (error) {
@@ -435,12 +462,44 @@ const MasterDashboard = () => {
 
   const handleRemoveDesign = async (designId: string) => {
     try {
-      await masterService.removeCanDoDesign(designId);
-      setDesigns(safeDesigns.filter(design => design.id !== designId));
-      toast.success('Дизайн удален');
-    } catch (error) {
+      // Находим дизайн в списке
+      const design = safeDesigns.find(d => d.nailDesign.id === designId);
+      
+      if (!design) {
+        toast.error('Дизайн не найден');
+        return;
+      }
+
+      // Проверяем, является ли дизайн созданным мастером
+      const isCreatedByMaster = design.nailDesign?.uploadedByMaster?.id === currentUser?.id;
+      
+      if (isCreatedByMaster) {
+        // Для созданных дизайнов - деактивируем через designService
+        await designService.updateDesign(designId, { isActive: false });
+        toast.success('Дизайн деактивирован');
+      } else {
+        // Для добавленных дизайнов - удаляем из списка "Я так могу"
+        await masterService.removeCanDoDesign(designId);
+        toast.success('Дизайн удален из списка "Я так могу"');
+      }
+      
+      // Обновляем список дизайнов
+      setDesigns(safeDesigns.filter(design => design.nailDesign.id !== designId));
+    } catch (error: any) {
       console.error('Ошибка удаления дизайна:', error);
-      toast.error('Не удалось удалить дизайн');
+      
+      // Более детальная обработка ошибок
+      if (error.message?.includes('не найден в вашем списке')) {
+        toast.error('Дизайн уже удален или не был добавлен в список');
+        // Обновляем список дизайнов, так как возможно он уже был удален
+        refreshMasterDesigns();
+      } else if (error.message?.includes('не авторизован')) {
+        toast.error('Необходимо войти в систему');
+      } else if (error.message?.includes('недоступно')) {
+        toast.error('Операция недоступна для вашей роли');
+      } else {
+        toast.error('Не удалось удалить дизайн. Попробуйте еще раз');
+      }
     }
   };
 
@@ -472,15 +531,16 @@ const MasterDashboard = () => {
     if (!currentUser?.id) return;
     
     try {
-      const designsResponse = await designService.getMasterDesigns(currentUser.id);
-      if (designsResponse.success && designsResponse.data) {
-        const masterDesigns: MasterDesign[] = designsResponse.data.map(design => ({
+      const designsResponse = await masterService.getAllMasterDesigns(currentUser.id);
+      if (designsResponse && Array.isArray(designsResponse)) {
+        // Преобразуем ответ в формат MasterDesign
+        const masterDesigns: MasterDesign[] = designsResponse.map((design: any) => ({
           id: design.id,
           nailDesign: design,
-          isActive: design.isActive,
+          isActive: design.isActive !== false, // По умолчанию активен
           customPrice: design.minPrice || 0,
-          estimatedDuration: 60, // значение по умолчанию
-          addedAt: design.createdAt
+          estimatedDuration: 60, // По умолчанию
+          addedAt: design.createdAt || new Date().toISOString()
         }));
         setDesigns(masterDesigns);
       }
@@ -491,20 +551,11 @@ const MasterDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-semibold">Кабинет мастера</h1>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={() => setIsEditModalOpen(true)}>
-              <Settings className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Кабинет мастера"
+        subtitle="Управление услугами и дизайнами"
+        showBackButton={false}
+      />
 
       <div className="max-w-7xl mx-auto p-6">
         <div className="max-w-md lg:max-w-6xl mx-auto lg:grid lg:grid-cols-3 lg:gap-8 space-y-6 lg:space-y-0">
@@ -515,23 +566,23 @@ const MasterDashboard = () => {
               <CardContent className="relative p-6 -mt-10">
                 <div className="flex items-end gap-4 mb-4">
                   <AvatarUpload
-                    currentAvatar={currentUser.avatar}
-                    userName={masterData.fullName || currentUser.email}
+                    currentAvatar={masterData.avatar_url || masterData.avatar}
+                    userName={processRussianText(masterData.fullName) || processRussianText(currentUser.email)}
                     size="lg"
-                    showUploadButton={true}
+                    showUploadButton={false}
                     onAvatarUpdate={(newAvatarUrl) => {
                       console.log('Аватар обновлен в MasterDashboard:', newAvatarUrl);
                     }}
                   />
                   
                   <div className="flex-1 pb-2">
-                    <h2 className="text-xl font-bold mb-1">{masterData.fullName || 'Мастер маникюра'}</h2>
+                    <h2 className="text-xl font-bold mb-1">{processRussianText(masterData.fullName) || 'Мастер маникюра'}</h2>
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       <span className="font-semibold">{masterData.rating || 0}</span>
                       <span className="text-muted-foreground text-sm">({masterData.reviewsCount || 0} отзывов)</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{masterData.address || 'Адрес не указан'}</p>
+                    <p className="text-sm text-muted-foreground">{processRussianText(masterData.address) || 'Адрес не указан'}</p>
                   </div>
                 </div>
                 
@@ -784,13 +835,7 @@ const MasterDashboard = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => service?.id && handleUpdateService(service.id, { isActive: !service.isActive })}
-                        >
-                          {service?.isActive ? "Деактивировать" : "Активировать"}
-                        </Button>
+                        
                         <Button 
                           size="sm" 
                           variant="destructive" 
@@ -829,34 +874,29 @@ const MasterDashboard = () => {
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <h4 className="font-medium">{design.nailDesign?.title || 'Без названия'}</h4>
-                            <p className="text-sm text-muted-foreground">{design.nailDesign?.type || 'basic'}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm text-muted-foreground">{design.nailDesign?.type === 'designer' ? 'Дизайнерский' : 'Базовый'}</p>
+                              {design.nailDesign?.uploadedByMaster?.id === currentUser?.id && (
+                                <Badge variant="outline" className="text-xs">
+                                  Создан мной
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           <Badge variant={design.isActive ? "default" : "secondary"}>
                             {design.isActive ? "Активен" : "Неактивен"}
                           </Badge>
                         </div>
                         
-                        <div className="flex justify-between text-sm mb-3">
-                          <span className="font-semibold text-primary">
-                            {design.customPrice || design.nailDesign?.minPrice || 0}₽
-                          </span>
-                          <span className="text-muted-foreground">{design.estimatedDuration || 0} мин</span>
-                        </div>
+                        
                         
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
-                            variant="outline" 
-                            onClick={() => handleUpdateDesign(design.id, { isActive: !design.isActive })}
-                          >
-                            {design.isActive ? "Деактивировать" : "Активировать"}
-                          </Button>
-                          <Button 
-                            size="sm" 
                             variant="destructive" 
-                            onClick={() => handleRemoveDesign(design.id)}
+                            onClick={() => handleRemoveDesign(design.nailDesign.id)}
                           >
-                            Удалить
+                            {design.nailDesign?.uploadedByMaster?.id === currentUser?.id ? 'Удалить' : 'Удалить'}
                           </Button>
                         </div>
                       </CardContent>
@@ -897,6 +937,7 @@ const MasterDashboard = () => {
             serviceId={selectedService.id}
             serviceName={selectedService.name}
             servicePrice={selectedService.price}
+            masterId={currentUser?.id}
           />
 
         </>

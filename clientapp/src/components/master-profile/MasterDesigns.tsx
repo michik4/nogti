@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Eye, Plus } from "lucide-react";
+import { Heart, Eye, Plus, CheckCircle } from "lucide-react";
 import { designService, NailDesign } from "@/services/designService";
+import { masterService } from "@/services/masterService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getImageUrl } from "@/utils/image.util";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "@/utils/image.util";
+import { roundPrice } from "@/utils/format.util";
 
 interface MasterDesignsProps {
   masterId: string;
@@ -20,11 +22,18 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
   useEffect(() => {
     const fetchMasterDesigns = async () => {
       try {
-        const response = await designService.getMasterDesigns(masterId);
-        if (response.success && response.data) {
-          // Фильтруем только активные дизайны
-          setDesigns(response.data.filter(design => design.isActive));
-        }
+        // Получаем дизайны из списка "Я так могу"
+        const canDoDesigns = await masterService.getAllMasterDesigns(masterId).catch(error => {
+          console.error('Ошибка загрузки дизайнов:', error);
+          return [];
+        });
+        
+        // Фильтруем только активные дизайны
+        const activeDesigns = canDoDesigns.filter((design: NailDesign) => 
+          design.isActive && design.isModerated
+        );
+        
+        setDesigns(activeDesigns);
       } catch (error) {
         console.error('Ошибка загрузки дизайнов мастера:', error);
       } finally {
@@ -67,7 +76,7 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
           </div>
           <h4 className="text-lg font-semibold mb-2">Пока нет дизайнов</h4>
           <p className="text-muted-foreground text-sm">
-            Здесь будут отображаться личные дизайны мастера
+            Здесь будут отображаться дизайны из списка "Я так могу"
           </p>
         </div>
       ) : (
@@ -98,6 +107,7 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
                       {design.type === 'designer' ? 'Дизайнерский' : 'Базовый'}
                     </Badge>
                     <div className="flex items-center gap-2 text-white text-xs">
+                      
                       <div className="flex items-center gap-1">
                         <Heart className="w-3 h-3 fill-white" />
                         <span>{design.likesCount}</span>
@@ -117,9 +127,11 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
                   variant={design.type === 'designer' ? 'default' : 'secondary'}
                   className="text-xs shadow-lg"
                 >
-                  {design.type === 'designer' ? 'Designer' : 'Basic'}
+                  {design.type === 'designer' ? 'Дизайнерский' : 'Базовый'}
                 </Badge>
               </div>
+              
+              
               
               {/* Лайки в левом нижнем углу - скрываются при наведении */}
               <div className="absolute bottom-2 left-2 group-hover:opacity-0 transition-opacity">
@@ -129,20 +141,8 @@ const MasterDesigns = ({ masterId, onDesignClick }: MasterDesignsProps) => {
                 </div>
               </div>
 
-              {/* Цена, если есть - скрывается при наведении */}
-              {design.minPrice ? (
-                <div className="absolute top-2 left-2 group-hover:opacity-0 transition-opacity">
-                  <Badge variant="outline" className="text-xs bg-white/90 text-black">
-                    от {design.minPrice}₽
-                  </Badge>
-                </div>
-              ) : (
-                <div className="absolute top-2 left-2 group-hover:opacity-0 transition-opacity">
-                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 border-amber-300">
-                    Нет услуг
-                  </Badge>
-                </div>
-              )}
+              
+
             </div>
           ))}
         </div>

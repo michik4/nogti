@@ -37,7 +37,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [redirectMessage, setRedirectMessage] = useState<string | null>(null);
-  const { login, register } = useAuth();
+  const { login, register, user } = useAuth();
   const { toast } = useToast();
 
   // Получаем путь, на который нужно перенаправить после входа
@@ -81,8 +81,25 @@ const Auth = () => {
           description: "Вы успешно вошли в систему.",
         });
 
-        // Перенаправляем на исходную страницу или на главную
-        navigate(from, { replace: true });
+        // Перенаправляем на исходную страницу или на соответствующий дашборд
+        if (from === '/' || from === '/auth') {
+          // Если пользователь пришел с главной или со страницы авторизации,
+          // перенаправляем на соответствующий дашборд
+          if (user && 'role' in user) {
+            if (user.role === 'nailmaster') {
+              navigate("/master-dashboard", { replace: true });
+            } else if (user.role === 'client') {
+              navigate("/client-dashboard", { replace: true });
+            } else {
+              navigate("/", { replace: true });
+            }
+          } else {
+            navigate("/", { replace: true });
+          }
+        } else {
+          // Иначе перенаправляем на исходную страницу
+          navigate(from, { replace: true });
+        }
       } else {
         // Регистрация
         const registerData: RegisterRequest = {
@@ -103,7 +120,7 @@ const Auth = () => {
 
         // Перенаправляем в зависимости от роли
         if (userType === 'client') {
-          navigate("/profile", { replace: true });
+          navigate("/client-dashboard", { replace: true });
         } else {
           navigate("/master-dashboard", { replace: true });
         }

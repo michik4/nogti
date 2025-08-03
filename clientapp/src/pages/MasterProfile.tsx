@@ -6,6 +6,7 @@ import DesktopProfileView from "@/components/master-profile/DesktopProfileView";
 import { userService } from "@/services/userService";
 import { Master } from "@/types/user.types";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/PageHeader";
 
 const MasterProfile = () => {
   const { masterId } = useParams();
@@ -83,10 +84,18 @@ const MasterProfile = () => {
     );
   }
 
-  return isMobile ? (
-    <MobileProfileView master={master} onBack={handleBack} />
-  ) : (
-    <DesktopProfileView master={master} onBack={handleBack} />
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <PageHeader
+        title="Профиль мастера"
+        onBackClick={handleBack}
+      />
+      {isMobile ? (
+        <MobileProfileView master={master} onBack={handleBack} />
+      ) : (
+        <DesktopProfileView master={master} onBack={handleBack} />
+      )}
+    </div>
   );
 };
 
