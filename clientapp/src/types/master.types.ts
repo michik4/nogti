@@ -29,6 +29,19 @@ export interface MasterServiceDesign {
     ordersCount: number;
     estimatedPrice?: number;
     createdAt?: string;
+    // Связи с авторами
+    uploadedByClient?: {
+      id: string;
+      username: string;
+    };
+    uploadedByAdmin?: {
+      id: string;
+      username: string;
+    };
+    uploadedByMaster?: {
+      id: string;
+      username: string;
+    };
   };
   createdAt: string;
   updatedAt: string;
@@ -139,6 +152,19 @@ export interface MasterDesign {
     createdAt?: string;
     likesCount?: number;
     ordersCount?: number;
+    // Связи с авторами
+    uploadedByClient?: {
+      id: string;
+      username: string;
+    };
+    uploadedByAdmin?: {
+      id: string;
+      username: string;
+    };
+    uploadedByMaster?: {
+      id: string;
+      username: string;
+    };
   };
   customPrice?: number;
   notes?: string;

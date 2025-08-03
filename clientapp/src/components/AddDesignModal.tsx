@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import FileUpload from "@/components/ui/file-upload";
 import { designService } from "@/services/designService";
 import { getImageUrl } from "@/utils/image.util";
+import { formatPrice } from "@/utils/format.util";
 
 interface AddDesignModalProps {
   isOpen: boolean;
@@ -273,7 +274,7 @@ const AddDesignModal = ({
                         <SelectContent>
                           {services.map((service) => (
                             <SelectItem key={service.id} value={service.id}>
-                              {service.name} ({service.price}₽)
+                              {service.name} ({formatPrice(service.price)})
                             </SelectItem>
                           ))}
                         </SelectContent>

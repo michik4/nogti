@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { mockMasters } from "@/data/mockMasters";
 import { useNavigate } from "react-router-dom";
+import { formatPrice } from "@/utils/format.util";
 
 interface MastersCatalogProps {
   isOpen: boolean;
@@ -109,7 +110,7 @@ export const MastersCatalog = ({ isOpen, onClose }: MastersCatalogProps) => {
                         </div>
                       </div>
                       <Badge className="absolute top-2 left-2 bg-black/70 text-white text-xs">
-                        {master.price}
+                        {formatPrice(master.price || 0)}
                       </Badge>
                     </div>
                   </Card>
@@ -144,7 +145,7 @@ export const MastersCatalog = ({ isOpen, onClose }: MastersCatalogProps) => {
                               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                               <span className="font-medium">{master.rating}</span>
                             </div>
-                            <div className="text-sm font-semibold">{master.price}</div>
+                            <div className="text-sm font-semibold">{formatPrice(master.price || 0)}</div>
                           </div>
                         </div>
                         

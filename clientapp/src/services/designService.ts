@@ -30,6 +30,19 @@ export interface NailDesign {
   isLiked?: boolean; // Добавляем поле для отображения статуса лайка
   createdAt: string;
   updatedAt: string;
+  // Связи с авторами
+  uploadedByClient?: {
+    id: string;
+    username: string;
+  };
+  uploadedByAdmin?: {
+    id: string;
+    username: string;
+  };
+  uploadedByMaster?: {
+    id: string;
+    username: string;
+  };
 }
 
 export interface GetDesignsParams {

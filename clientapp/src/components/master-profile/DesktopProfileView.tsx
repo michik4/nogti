@@ -21,6 +21,7 @@ import { masterRating } from "@/types/master-rating.type";
 import { masterRatingService } from "@/services/master-rating.service";
 import styles from './DesktopProfileView.module.css';
 import { formatCustomDate } from "@/utils/time.util";
+import { formatPrice } from "@/utils/format.util";
 import { ReviewsSummary } from "../ReviewsSummary";
 import MasterAvailability from "./MasterAvailability";
 
@@ -243,7 +244,7 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-xl text-primary mb-3">{service.price}₽</p>
+                          <p className="font-bold text-xl text-primary mb-3">{formatPrice(service.price)}</p>
                           {canBook && (
                             <Button
                               variant="outline"

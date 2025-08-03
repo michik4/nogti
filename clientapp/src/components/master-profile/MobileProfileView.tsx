@@ -318,7 +318,7 @@ const MobileProfileView = ({ master, onBack }: MobileProfileViewProps) => {
               onClick={handleBookingClick}
             >
               <Calendar className="w-5 h-5 mr-2" />
-              Записаться на {master.price}
+              Записаться на {formatPrice(master.price || 0)}
             </Button>
           </div>
         )}

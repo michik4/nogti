@@ -7,7 +7,7 @@ import { masterService } from "@/services/masterService";
 import { MasterServiceDesign } from "@/types/master.types";
 import { toast } from "sonner";
 import { getImageUrl } from "@/utils/image.util";
-import { roundPrice } from "@/utils/format.util";
+import { roundPrice, formatPrice } from "@/utils/format.util";
 
 interface DesignSelectorProps {
   serviceId: string;
@@ -151,7 +151,7 @@ const DesignSelector = ({ serviceId, selectedDesignId, onDesignSelect }: DesignS
                   <div className="flex items-center gap-2 mt-1">
                     {serviceDesign.customPrice && (
                       <span className="text-xs text-primary font-medium">
-                        +{roundPrice(serviceDesign.customPrice)}₽
+                        +{formatPrice(serviceDesign.customPrice)}
                       </span>
                     )}
                     {serviceDesign.additionalDuration !== 0 && (

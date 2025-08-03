@@ -3,6 +3,7 @@ import { ClientEntity } from './client.entity';
 import { NailMasterEntity } from './nailmaster.entity';
 import { NailDesignEntity } from './nail-design.entity';
 import { MasterServiceEntity } from './master-service.entity';
+import { OrderDesignSnapshotEntity } from './order-design-snapshot.entity';
 
 export enum OrderStatus {
     PENDING = 'pending', // Ожидает ответа мастера
@@ -76,5 +77,8 @@ export class OrderEntity {
     masterService!: MasterServiceEntity; // Обязательная услуга
 
     @ManyToOne(() => NailDesignEntity, (design) => design.orders, { nullable: true })
-    nailDesign?: NailDesignEntity; // Опциональный дизайн
+    nailDesign?: NailDesignEntity; // Опциональный дизайн (для существующих заказов)
+
+    @ManyToOne(() => OrderDesignSnapshotEntity, { nullable: true })
+    designSnapshot?: OrderDesignSnapshotEntity; // Снимок дизайна для новых заказов
 }

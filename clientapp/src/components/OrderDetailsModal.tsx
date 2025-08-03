@@ -35,10 +35,9 @@ import {
   canCancelOrder,
   canAcceptProposedTime,
   canBookAgain,
-  formatOrderDate,
-  formatOrderPrice
+  formatOrderDate
 } from '@/utils/order.util';
-import { roundPrice } from '@/utils/format.util';
+import { roundPrice, formatPrice } from '@/utils/format.util';
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -118,8 +117,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
   // Повторная запись
   const handleBookAgain = () => {
-    if (order.nailDesign && onBookAgain) {
-      onBookAgain(order.nailDesign.id);
+    const designId = order.nailDesign?.id || order.designSnapshot?.originalDesignId;
+    if (designId && onBookAgain) {
+      onBookAgain(designId);
     } else {
       toast({
         title: "Повторная запись",
@@ -145,50 +145,106 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Основная информация */}
+          {/* Услуга */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="w-5 h-5" />
-                Услуга и дизайн
+                Услуга
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-4">
-                {/* Изображение дизайна или аватар мастера */}
                 <div className="flex-shrink-0">
-                  {order.nailDesign ? (
-                    <img 
-                      src={getImageUrl(order.nailDesign.imageUrl) || '/placeholder.svg'} 
-                      alt={order.nailDesign.title}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <SmartAvatar 
-                      src={order.nailMaster.avatar} 
-                      alt={order.nailMaster.fullName}
-                      fallback={order.nailMaster.fullName.charAt(0).toUpperCase()}
-                      className="w-20 h-20"
-                    />
-                  )}
+                  <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <span className="text-primary text-2xl font-bold">У</span>
+                  </div>
                 </div>
                 
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">
-                    {order.nailDesign?.title || order.masterService?.name || 'Услуга не указана'}
+                    {order.masterService?.name || 'Услуга не указана'}
                   </h3>
                   <p className="text-muted-foreground">
-                    {order.nailDesign?.description || order.masterService?.description || 'Описание отсутствует'}
+                    {order.masterService?.description || 'Описание отсутствует'}
                   </p>
-                  {order.nailDesign && (
-                    <Badge variant="secondary" className="mt-2">
-                      {order.nailDesign.type}
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className="text-sm text-muted-foreground">
+                      Длительность: {order.masterService?.duration || 'Не указана'} мин
+                    </span>
+                    <span className="text-sm font-semibold text-primary">
+                      {formatPrice(order.masterService?.price || 0)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Дизайн (если выбран) */}
+          {(order.nailDesign || order.designSnapshot) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Выбранный дизайн
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={getImageUrl((order.nailDesign || order.designSnapshot)?.imageUrl) || '/placeholder.svg'} 
+                      alt={(order.nailDesign || order.designSnapshot)?.title}
+                      className="w-20 h-20 rounded-lg object-cover border border-border"
+                    />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">
+                      {(order.nailDesign || order.designSnapshot)?.title}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {(order.nailDesign || order.designSnapshot)?.description || 'Описание отсутствует'}
+                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <Badge variant="secondary">
+                        {(order.nailDesign || order.designSnapshot)?.type === 'basic' ? 'Базовый' : 'Дизайнерский'}
+                      </Badge>
+                      {(order.nailDesign || order.designSnapshot)?.color && (
+                        <Badge variant="outline">
+                          Цвет: {(order.nailDesign || order.designSnapshot)?.color}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {/* Дополнительная информация о дизайне */}
+                    {order.nailDesign && (
+                      <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Лайков:</span>
+                          <span className="ml-1 font-medium">{order.nailDesign.likesCount || 0}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Заказов:</span>
+                          <span className="ml-1 font-medium">{order.nailDesign.ordersCount || 0}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Информация о снимке дизайна */}
+                    {order.designSnapshot && (
+                      <div className="mt-3 text-sm">
+                        <Badge variant="outline" className="text-xs">
+                          Снимок дизайна
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Информация о мастере */}
           <Card>
@@ -265,20 +321,59 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             </CardContent>
           </Card>
 
-          {/* Цена */}
+          {/* Стоимость */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
-                Стоимость
+                Стоимость заказа
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold">{roundPrice(order.price)} ₽</span>
-                <span className="text-sm text-muted-foreground">
-                  Длительность: {order.masterService?.duration || 'Не указана'} мин
-                </span>
+            <CardContent className="space-y-4">
+              {/* Разбивка стоимости */}
+              <div className="space-y-3">
+                {/* Услуга */}
+                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-primary text-sm font-medium">У</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-sm">Услуга</span>
+                      <p className="text-xs text-muted-foreground">{order.masterService?.name}</p>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-primary">{formatPrice(order.masterService?.price || 0)}</span>
+                </div>
+                
+                {/* Дизайн (если есть) */}
+                {order.nailDesign && (
+                  <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg border border-secondary/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                        <span className="text-secondary-foreground text-sm font-medium">Д</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-sm">Дизайн</span>
+                        <p className="text-xs text-muted-foreground">{order.nailDesign.title}</p>
+                      </div>
+                    </div>
+                    <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">
+                      +{formatPrice((order.price || 0) - (order.masterService?.price || 0))}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Итоговая сумма */}
+              <div className="flex justify-between items-center pt-4 border-t border-border">
+                <div>
+                  <span className="text-lg font-semibold">Итого к оплате</span>
+                  {order.nailDesign && (
+                    <p className="text-xs text-muted-foreground">Включая дизайн</p>
+                  )}
+                </div>
+                <span className="text-2xl font-bold text-primary">{formatPrice(order.price || 0)}</span>
               </div>
             </CardContent>
           </Card>

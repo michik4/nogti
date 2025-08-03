@@ -31,10 +31,9 @@ import {
   getOrderStatusText, 
   getOrderStatusDescription,
   formatOrderDate,
-  formatOrderPrice,
   canCompleteOrder
 } from "@/utils/order.util";
-import { roundPrice } from "@/utils/format.util";
+import { roundPrice, formatPrice } from "@/utils/format.util";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import CompleteOrderModal from "@/components/CompleteOrderModal";
 
@@ -346,7 +345,7 @@ const MasterOrdersTab: React.FC<MasterOrdersTabProps> = ({ masterId }) => {
             <div className="flex items-center gap-2">
               
               <span className="font-semibold">
-                {roundPrice(order.price || order.masterService?.price || 0)} ₽
+                {formatPrice(order.price || order.masterService?.price || 0)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

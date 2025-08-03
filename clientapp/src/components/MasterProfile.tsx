@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import MasterAvailability from "./master-profile/MasterAvailability";
 import { toast } from "sonner";
+import { formatPrice } from "@/utils/format.util";
 
 interface MasterProfileProps {
   master: Master;
@@ -267,7 +268,7 @@ const MasterProfile = ({ master, onBack }: MasterProfileProps) => {
                 onClick={handleBookingClick}
               >
                 <Calendar className="w-5 h-5 mr-2" />
-                Записаться на {master.price}
+                Записаться на {formatPrice(master.price || 0)}
               </Button>
             </div>
           )}
@@ -447,7 +448,7 @@ const MasterProfile = ({ master, onBack }: MasterProfileProps) => {
                   onClick={handleBookingClick}
                 >
                   <Calendar className="w-5 h-5 mr-2" />
-                  Записаться на {master.price}
+                  Записаться на {formatPrice(master.price || 0)}
                 </Button>
               </div>
             </div>

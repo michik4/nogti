@@ -164,7 +164,8 @@ export class AdminController {
       // Создаем QueryBuilder
       const queryBuilder = designRepo.createQueryBuilder('nail_designs')
         .leftJoinAndSelect('nail_designs.uploadedByClient', 'uploadedByClient')
-        .leftJoinAndSelect('nail_designs.uploadedByAdmin', 'uploadedByAdmin');
+        .leftJoinAndSelect('nail_designs.uploadedByAdmin', 'uploadedByAdmin')
+        .leftJoinAndSelect('nail_designs.uploadedByMaster', 'uploadedByMaster');
 
       // Добавляем условия фильтрации
       if (type) {
@@ -200,7 +201,7 @@ export class AdminController {
         type: design.type,
         source: design.source,
         imageUrl: design.imageUrl,
-        authorName: design.uploadedByClient?.username || design.uploadedByAdmin?.username || 'Система',
+        authorName: design.uploadedByClient?.username || design.uploadedByAdmin?.username || design.uploadedByMaster?.username || 'Система',
         likesCount: design.likesCount,
         isModerated: design.isModerated,
         isActive: design.isActive,

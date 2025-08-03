@@ -30,6 +30,19 @@ export interface NailDesignType {
   isLiked?: boolean;
   createdAt: string;
   updatedAt: string;
+  // Связи с авторами
+  uploadedByClient?: {
+    id: string;
+    username: string;
+  };
+  uploadedByAdmin?: {
+    id: string;
+    username: string;
+  };
+  uploadedByMaster?: {
+    id: string;
+    username: string;
+  };
 }
 
 // Добавляем также алиас для совместимости

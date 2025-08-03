@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Settings, Calendar, Star, Plus, Users, TrendingUp, Clock, DollarSign, Upload, Heart, Play, CheckCircle, XCircle, Eye, Palette, Search, Edit2, CalendarDays } from "lucide-react";
+import { ArrowLeft, Edit, Settings, Calendar, Star, Plus, Users, TrendingUp, Clock, DollarSign, Upload, Heart, Play, CheckCircle, XCircle, Eye, Palette, Search, Edit2, CalendarDays, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,7 @@ import { designService, NailDesign } from "@/services/designService";
 import MasterOrdersTab from "./components/MasterOrdersTab";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import { getImageUrl } from "@/utils/image.util";
+import { formatPrice } from "@/utils/format.util";
 import PageHeader from "@/components/PageHeader";
 import ScheduleManager from "@/components/ScheduleManager";
 
@@ -474,9 +475,9 @@ const MasterDashboard = () => {
       const isCreatedByMaster = design.nailDesign?.uploadedByMaster?.id === currentUser?.id;
       
       if (isCreatedByMaster) {
-        // Для созданных дизайнов - деактивируем через designService
-        await designService.updateDesign(designId, { isActive: false });
-        toast.success('Дизайн деактивирован');
+        // Для созданных дизайнов - полностью удаляем через designService
+        await designService.deleteDesign(designId);
+        toast.success('Дизайн полностью удален из системы');
       } else {
         // Для добавленных дизайнов - удаляем из списка "Я так могу"
         await masterService.removeCanDoDesign(designId);
@@ -497,6 +498,8 @@ const MasterDashboard = () => {
         toast.error('Необходимо войти в систему');
       } else if (error.message?.includes('недоступно')) {
         toast.error('Операция недоступна для вашей роли');
+      } else if (error.message?.includes('недостаточно прав')) {
+        toast.error('У вас нет прав для удаления этого дизайна');
       } else {
         toast.error('Не удалось удалить дизайн. Попробуйте еще раз');
       }
@@ -749,7 +752,7 @@ const MasterDashboard = () => {
                       </div>
                       
                       <div className="flex justify-between items-center mb-3">
-                        <span className="font-semibold text-primary">{service?.price || 0}₽</span>
+                        <span className="font-semibold text-primary">{formatPrice(service?.price || 0)}</span>
                         <span className="text-sm text-muted-foreground">{service?.duration || 0} мин</span>
                       </div>
 
@@ -800,15 +803,17 @@ const MasterDashboard = () => {
                                       </Button>
                                       <Button
                                         size="sm"
-                                        variant="destructive"
+                                        variant="ghost"
+                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                         onClick={() => service && handleRemoveDesignFromService(service.id, serviceDesign.nailDesign.id)}
+                                        title="Удалить дизайн из услуги"
                                       >
-                                        <XCircle className="w-3 h-3" />
+                                        <Trash2 className="w-3 h-3" />
                                       </Button>
                                     </div>
                                   </div>
                                   <div className="absolute bottom-1 left-1 bg-black/75 text-white text-xs px-1 rounded">
-                                    {serviceDesign.customPrice || service?.price || 0}₽
+                                    {formatPrice(serviceDesign.customPrice || service?.price || 0)}
                                   </div>
                                   {!serviceDesign.isActive && (
                                     <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 rounded">
@@ -838,10 +843,12 @@ const MasterDashboard = () => {
                         
                         <Button 
                           size="sm" 
-                          variant="destructive" 
+                          variant="ghost" 
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => service?.id && handleDeleteService(service.id)}
+                          title="Удалить услугу"
                         >
-                          Удалить
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </CardContent>
@@ -893,10 +900,12 @@ const MasterDashboard = () => {
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
-                            variant="destructive" 
+                            variant="ghost" 
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemoveDesign(design.nailDesign.id)}
+                            title={design.nailDesign?.uploadedByMaster?.id === currentUser?.id ? 'Полностью удалить дизайн' : 'Удалить из списка'}
                           >
-                            {design.nailDesign?.uploadedByMaster?.id === currentUser?.id ? 'Удалить' : 'Удалить'}
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </CardContent>

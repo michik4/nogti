@@ -13,4 +13,5 @@ export { NotificationEntity, NotificationType } from './notification.entity';
 export { MasterDesignEntity } from './master-design.entity';
 export { MasterServiceEntity } from './master-service.entity';
 export { MasterServiceDesignEntity } from './master-service-design.entity';
-export { MasterRatingEntity } from './master-rating.entity'
+export { MasterRatingEntity } from './master-rating.entity';
+export { OrderDesignSnapshotEntity } from './order-design-snapshot.entity';

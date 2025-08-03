@@ -59,6 +59,22 @@ export interface Order {
     description?: string;
     imageUrl: string;
     type: string;
+    color?: string;
+    likesCount?: number;
+    ordersCount?: number;
+  };
+  
+  designSnapshot?: {
+    id: string;
+    originalDesignId?: string;
+    title: string;
+    description?: string;
+    imageUrl: string;
+    type: string;
+    color?: string;
+    source: string;
+    authorName?: string;
+    authorId?: string;
   };
 }
 

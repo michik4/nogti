@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { designService, NailDesign } from "@/services/designService";
 import { getImageUrl } from "@/utils/image.util";
 import { useNavigate } from "react-router-dom";
-import { roundPrice } from "@/utils/format.util";
+
 import { MastersList } from "@/pages/designs/components/MastersList";
 import { Badge } from "@/components/ui/badge";
 

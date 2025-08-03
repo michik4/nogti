@@ -8,7 +8,7 @@ import { designService } from "@/services/designService";
 import { Design, NailDesignType } from "@/types/design.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getImageUrl } from "../../utils/image.util";
-import { roundPrice } from "@/utils/format.util";
+import { roundPrice, formatPrice } from "@/utils/format.util";
 
 /**
  * Секция с популярными дизайнами
@@ -103,7 +103,7 @@ const PopularDesigns = () => {
                   {/* Ценник */}
                   {design.estimatedPrice && (
                     <Badge className="absolute top-3 right-3 bg-black/80 text-white text-xs backdrop-blur-sm">
-                      {roundPrice(design.estimatedPrice)}₽
+                      {formatPrice(design.estimatedPrice)}
                     </Badge>
                   )}
                   

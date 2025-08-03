@@ -5,9 +5,13 @@ import { NailDesignEntity } from '../entities/nail-design.entity';
 import { NailMasterEntity } from '../entities/nailmaster.entity';
 import { ClientEntity } from '../entities/client.entity';
 import { MasterServiceEntity } from '../entities/master-service.entity';
+import { MasterServiceDesignEntity } from '../entities/master-service-design.entity';
+import { OrderDesignSnapshotEntity } from '../entities/order-design-snapshot.entity';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { ApiResponse, PaginatedResponse } from '../types/api.type';
 import { Like, ILike } from 'typeorm';
+import { DesignSnapshotUtil } from '../utils/design-snapshot.util';
+import { OrderDesignUtil } from '../utils/order-design.util';
 
 export class OrderController {
     /**
@@ -97,27 +101,52 @@ export class OrderController {
 
             // Создаем заказ
             const orderRepository = AppDataSource.getRepository(OrderEntity);
+            const snapshotRepository = AppDataSource.getRepository(OrderDesignSnapshotEntity);
+            const masterServiceDesignRepository = AppDataSource.getRepository(MasterServiceDesignEntity);
             const order = new OrderEntity();
             
             order.description = description;
             order.requestedDateTime = new Date(requestedDateTime);
             order.clientNotes = clientNotes;
             order.status = OrderStatus.PENDING;
-            order.price = service.price; // Цена берется из услуги
             order.client = client;
             order.nailMaster = master;
             order.masterService = service;
+
+            // Рассчитываем общую стоимость заказа
+            let totalPrice = Number(service.price) || 0; // Базовая цена услуги (преобразуем в число)
+
+            // Если указан дизайн, добавляем его стоимость
             if (design) {
+                // Ищем связь между услугой и дизайном для получения customPrice
+                const serviceDesign = await masterServiceDesignRepository.findOne({
+                    where: {
+                        masterService: { id: masterServiceId },
+                        nailDesign: { id: nailDesignId },
+                        isActive: true
+                    }
+                });
+
+                if (serviceDesign && serviceDesign.customPrice) {
+                    totalPrice += Number(serviceDesign.customPrice) || 0; // Добавляем стоимость дизайна (преобразуем в число)
+                }
+
+                // Устанавливаем связь с дизайном
                 order.nailDesign = design;
-            }
-
-            const savedOrder = await orderRepository.save(order);
-
-            // Увеличиваем счетчик заказов у дизайна (если указан)
-            if (design) {
+                
+                // Создаем снимок дизайна
+                const snapshot = DesignSnapshotUtil.createDesignSnapshot(design);
+                const savedSnapshot = await snapshotRepository.save(snapshot);
+                order.designSnapshot = savedSnapshot;
+                
+                // Увеличиваем счетчик заказов у дизайна
                 design.ordersCount += 1;
                 await designRepository.save(design);
             }
+
+            order.price = totalPrice; // Устанавливаем итоговую стоимость
+
+            const savedOrder = await orderRepository.save(order);
 
             const response: ApiResponse<OrderEntity> = {
                 success: true,
@@ -154,6 +183,7 @@ export class OrderController {
                 .leftJoinAndSelect('order.client', 'client')
                 .leftJoinAndSelect('order.nailMaster', 'master')
                 .leftJoinAndSelect('order.nailDesign', 'design')
+                .leftJoinAndSelect('order.designSnapshot', 'designSnapshot')
                 .leftJoinAndSelect('order.masterService', 'service');
 
             // Фильтруем по роли пользователя
@@ -242,7 +272,7 @@ export class OrderController {
             order.status = OrderStatus.CONFIRMED;
             order.confirmedDateTime = order.requestedDateTime;
             order.masterResponseTime = new Date();
-            if (price) order.price = price;
+            if (price) order.price = Number(price) || 0;
             if (masterNotes) order.masterNotes = masterNotes;
 
             const updatedOrder = await orderRepository.save(order);
@@ -655,7 +685,7 @@ export class OrderController {
 
             const order = await orderRepository.findOne({
                 where: whereCondition,
-                relations: ['nailDesign', 'nailMaster', 'client', 'masterService']
+                relations: ['nailDesign', 'designSnapshot', 'nailMaster', 'client', 'masterService']
             });
 
             if (!order) {
@@ -667,9 +697,15 @@ export class OrderController {
                 return;
             }
 
+            // Получаем информацию о дизайне
+            const designInfo = OrderDesignUtil.getDesignInfo(order);
+
             const response: ApiResponse = {
                 success: true,
-                data: order
+                data: {
+                    ...order,
+                    designInfo
+                }
             };
             res.json(response);
         } catch (error) {

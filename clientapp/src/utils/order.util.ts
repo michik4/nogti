@@ -120,7 +120,12 @@ export const formatOrderDate = (dateString: string): string => {
  */
 export const formatOrderPrice = (price?: number): string => {
   if (!price) return 'Цена не указана';
-  return `${price.toLocaleString('ru-RU')} ₽`;
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(Math.round(price));
 };
 
 /**

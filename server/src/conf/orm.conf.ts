@@ -15,6 +15,7 @@ import { ClientEntity } from "../entities/client.entity";
 import { MasterServiceEntity } from "../entities/master-service.entity";
 import { MasterServiceDesignEntity } from "../entities/master-service-design.entity";
 import { MasterRatingEntity } from "../entities";
+import { OrderDesignSnapshotEntity } from "../entities";
 
 
 const dbConfig = getDbConfig();
@@ -42,7 +43,8 @@ export const AppDataSource = new DataSource({
         ScheduleEntity,
         MasterServiceEntity,
         MasterServiceDesignEntity,
-        ReviewEntity
+        ReviewEntity,
+        OrderDesignSnapshotEntity
     ],
     migrations: [__dirname + "/../migrations/*.ts"],
     synchronize: ormConfig.SYNCHRONIZE,

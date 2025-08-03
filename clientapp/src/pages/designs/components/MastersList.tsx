@@ -234,19 +234,9 @@ export const MastersList: React.FC<MastersListProps> = ({
                                 <h5 className={styles.serviceName}>{service.name}</h5>
                                 <div className={styles.servicePrice}>
                                   {(() => {
-                                    const basePrice = Number(service.basePrice) || 0;
-                                    const customPrice = Number(service.customPrice) || 0;
-                                    const totalPrice = basePrice + customPrice;
-                                    console.log('Service debug:', {
-                                      serviceId: service.id,
-                                      basePrice: service.basePrice,
-                                      customPrice: service.customPrice,
-                                      basePriceNum: basePrice,
-                                      customPriceNum: customPrice,
-                                      totalPrice,
-                                      isNaN: isNaN(totalPrice)
-                                    });
-                                    return isNaN(totalPrice) ? 'Цена не указана' : `${totalPrice} ₽`;
+                                    // Используем totalPrice из API, который уже правильно рассчитан
+                                    const totalPrice = Number(service.totalPrice) || 0;
+                                    return isNaN(totalPrice) || totalPrice === 0 ? 'Цена не указана' : formatPrice(totalPrice);
                                   })()}
                                 </div>
                               </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/utils/format.util";
 import { useAuth } from "@/contexts/AuthContext";
 import { orderService } from "@/services/orderService";
 import { CreateOrderData } from "@/types/booking.types";
@@ -186,11 +187,11 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                 <p className="text-sm text-muted-foreground mb-3">{service.description}</p>
               )}
               <div className="flex items-center gap-4 text-sm">
-                <span className="font-medium text-primary">{service.price}₽</span>
+                <span className="font-medium text-primary">{formatPrice(service.price)}</span>
                 <span className="text-muted-foreground">{service.duration} мин</span>
                 {selectedDesign?.customPrice && (
                   <span className="text-xs text-muted-foreground">
-                    +{selectedDesign.customPrice}₽ за дизайн
+                    +{formatPrice(selectedDesign.customPrice)} за дизайн
                   </span>
                 )}
               </div>
@@ -229,7 +230,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                         </Badge>
                         {selectedDesign.customPrice && (
                           <span className="text-primary font-medium">
-                            +{selectedDesign.customPrice}₽
+                            +{formatPrice(selectedDesign.customPrice)}
                           </span>
                         )}
                         {selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 && (
@@ -252,29 +253,61 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
             <Separator />
 
             {/* Total Price */}
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold text-lg">Общая стоимость</h4>
-                  <div className="space-y-1 mt-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Услуга "{service.name}":</span>
-                      <span>{service.price}₽</span>
+            <div className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <h4 className="font-semibold text-lg text-foreground">Общая стоимость</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {/* Услуга */}
+                    <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg border border-border/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary text-sm font-medium">У</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-sm">Услуга</span>
+                          <p className="text-xs text-muted-foreground">{service.name}</p>
+                        </div>
+                      </div>
+                      <span className="font-semibold text-primary">{formatPrice(service.price)}</span>
                     </div>
+                    
+                    {/* Дизайн (если выбран) */}
                     {selectedDesign && selectedDesign.customPrice && (
-                      <div className="flex justify-between text-sm">
-                        <span>Дизайн "{selectedDesign.nailDesign.title}":</span>
-                        <span>+{selectedDesign.customPrice}₽</span>
+                      <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                            <span className="text-secondary-foreground text-sm font-medium">Д</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-sm text-foreground">Дизайн</span>
+                            <p className="text-xs text-muted-foreground">{selectedDesign.nailDesign.title}</p>
+                          </div>
+                        </div>
+                        <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">+{formatPrice(selectedDesign.customPrice)}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-primary">
-                    {calculateTotalPrice()}₽
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Итого
+                
+                {/* Итоговая сумма */}
+                <div className="ml-6 p-4 bg-primary/10 rounded-lg border border-primary/30 min-w-[140px]">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary mb-1">
+                      {formatPrice(calculateTotalPrice())}
+                    </div>
+                    <div className="text-xs text-muted-foreground font-medium">
+                      Итого к оплате
+                    </div>
+                    {selectedDesign && selectedDesign.customPrice && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Включая дизайн
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

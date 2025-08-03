@@ -9,6 +9,8 @@ import { ApiResponse, PaginatedResponse } from '../types/api.type';
 import { Like, In } from 'typeorm';
 import { getRepository, getConnection } from 'typeorm';
 import { MasterServiceDesignEntity } from '../entities/master-service-design.entity';
+import { OrderDesignSnapshotEntity } from '../entities/order-design-snapshot.entity';
+import { DesignSnapshotUtil } from '../utils/design-snapshot.util';
 
 export class NailDesignController {
     /**
@@ -153,7 +155,7 @@ export class NailDesignController {
             const designRepository = AppDataSource.getRepository(NailDesignEntity);
             const design = await designRepository.findOne({
                 where: { id, isActive: true },
-                relations: ['uploadedByClient', 'uploadedByAdmin']
+                relations: ['uploadedByClient', 'uploadedByAdmin', 'uploadedByMaster']
             });
 
             if (!design) {
@@ -640,7 +642,7 @@ export class NailDesignController {
             const designRepository = AppDataSource.getRepository(NailDesignEntity);
             const design = await designRepository.findOne({ 
                 where: { id },
-                relations: ['uploadedByClient', 'uploadedByAdmin']
+                relations: ['uploadedByClient', 'uploadedByAdmin', 'uploadedByMaster']
             });
 
             if (!design) {
@@ -655,7 +657,8 @@ export class NailDesignController {
             // Проверяем права на редактирование (админ или автор)
             const isAdmin = userRole === 'admin';
             const isAuthor = (design.uploadedByClient?.id === userId) || 
-                            (design.uploadedByAdmin?.id === userId);
+                            (design.uploadedByAdmin?.id === userId) ||
+                            (design.uploadedByMaster?.id === userId);
 
             if (!isAdmin && !isAuthor) {
                 const response: ApiResponse = {
@@ -700,7 +703,7 @@ export class NailDesignController {
     }
 
     /**
-     * Удалить дизайн
+     * Полностью удалить дизайн из базы данных
      */
     static async deleteDesign(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
@@ -718,9 +721,13 @@ export class NailDesignController {
             }
 
             const designRepository = AppDataSource.getRepository(NailDesignEntity);
+            const orderRepository = AppDataSource.getRepository('OrderEntity');
+            const snapshotRepository = AppDataSource.getRepository(OrderDesignSnapshotEntity);
+            const masterServiceDesignRepository = AppDataSource.getRepository(MasterServiceDesignEntity);
+
             const design = await designRepository.findOne({ 
                 where: { id },
-                relations: ['uploadedByClient', 'uploadedByAdmin']
+                relations: ['uploadedByClient', 'uploadedByAdmin', 'uploadedByMaster']
             });
 
             if (!design) {
@@ -735,7 +742,8 @@ export class NailDesignController {
             // Проверяем права на удаление (админ или автор)
             const isAdmin = userRole === 'admin';
             const isAuthor = (design.uploadedByClient?.id === userId) || 
-                            (design.uploadedByAdmin?.id === userId);
+                            (design.uploadedByAdmin?.id === userId) ||
+                            (design.uploadedByMaster?.id === userId);
 
             if (!isAdmin && !isAuthor) {
                 const response: ApiResponse = {
@@ -746,21 +754,76 @@ export class NailDesignController {
                 return;
             }
 
-            // Мягкое удаление (деактивация)
-            design.isActive = false;
-            await designRepository.save(design);
+            // Начинаем транзакцию
+            const queryRunner = AppDataSource.createQueryRunner();
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
 
-            const response: ApiResponse = {
-                success: true,
-                message: 'Дизайн успешно удален'
-            };
+            try {
+                // 1. Создаем снимки дизайна для всех заказов, где используется этот дизайн
+                const orderRepository = queryRunner.manager.getRepository('OrderEntity');
+                const ordersWithDesign = await orderRepository.find({
+                    where: { nailDesign: { id } },
+                    relations: ['nailDesign']
+                });
 
-            res.json(response);
+                for (const order of ordersWithDesign) {
+                    // Создаем снимок дизайна
+                    const snapshot = DesignSnapshotUtil.createDesignSnapshot(order.nailDesign);
+                    const savedSnapshot = await queryRunner.manager.save(OrderDesignSnapshotEntity, snapshot);
+                    
+                    // Обновляем заказ, чтобы он использовал снимок вместо ссылки на дизайн
+                    await orderRepository.update(order.id, {
+                        designSnapshot: savedSnapshot,
+                        nailDesign: null // Убираем ссылку на оригинальный дизайн
+                    });
+                }
+
+                // 2. Удаляем все связи дизайна с услугами мастеров
+                const masterServiceDesignRepository = queryRunner.manager.getRepository(MasterServiceDesignEntity);
+                await masterServiceDesignRepository.delete({
+                    nailDesign: { id }
+                });
+
+                // 3. Удаляем все лайки дизайна
+                const clientRepository = queryRunner.manager.getRepository(ClientEntity);
+                const clientsWithLikes = await clientRepository.find({
+                    relations: ['likedNailDesigns'],
+                    where: { likedNailDesigns: { id } }
+                });
+
+                for (const client of clientsWithLikes) {
+                    client.likedNailDesigns = client.likedNailDesigns.filter(d => d.id !== id);
+                    await clientRepository.save(client);
+                }
+
+                // 4. Удаляем сам дизайн
+                await queryRunner.manager.delete(NailDesignEntity, { id });
+
+                // Подтверждаем транзакцию
+                await queryRunner.commitTransaction();
+
+                const response: ApiResponse = {
+                    success: true,
+                    message: 'Дизайн полностью удален из системы'
+                };
+
+                res.json(response);
+
+            } catch (error) {
+                // Откатываем транзакцию в случае ошибки
+                await queryRunner.rollbackTransaction();
+                throw error;
+            } finally {
+                // Освобождаем ресурсы
+                await queryRunner.release();
+            }
+
         } catch (error) {
-            console.error('Ошибка удаления дизайна:', error);
+            console.error('Ошибка полного удаления дизайна:', error);
             const response: ApiResponse = {
                 success: false,
-                error: 'Внутренняя ошибка сервера'
+                error: 'Внутренняя ошибка сервера при удалении дизайна'
             };
             res.status(500).json(response);
         }
@@ -778,7 +841,7 @@ export class NailDesignController {
                 where: { isActive: true, isModerated: true },
                 order: { likesCount: 'DESC' },
                 take: Math.min(limit, 20), // Ограничиваем максимальное количество
-                relations: ['uploadedByClient', 'uploadedByAdmin'] // Добавляем связи для получения информации о мастере
+                relations: ['uploadedByClient', 'uploadedByAdmin', 'uploadedByMaster'] // Добавляем связи для получения информации о мастере
             });
 
             // Получаем минимальные цены для всех дизайнов

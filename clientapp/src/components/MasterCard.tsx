@@ -10,6 +10,7 @@ import { ReviewsModal } from "./ReviewsModal";
 import { CommentsModal } from "./CommentsModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrice } from "@/utils/format.util";
 
 interface MasterCardProps {
   master: Master;
@@ -352,7 +353,7 @@ export const MasterCard = ({ master, onSelect, onSwipe, isMobile = false }: Mast
               <div className="flex items-center gap-2 mb-2">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">{master.location}</span>
-                <span className="text-sm font-semibold">{master.price}</span>
+                <span className="text-sm font-semibold">{formatPrice(master.price || 0)}</span>
               </div>
               
               <p className="text-sm mb-3 opacity-90 line-clamp-2">{master.description}</p>
@@ -413,7 +414,7 @@ export const MasterCard = ({ master, onSelect, onSwipe, isMobile = false }: Mast
               <div className="flex items-center gap-2 mb-2">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">{master.location}</span>
-                <span className="text-sm font-semibold">{master.price}</span>
+                <span className="text-sm font-semibold">{formatPrice(master.price || 0)}</span>
                 <span className="text-sm">• {likesCount} лайков</span>
               </div>
               
