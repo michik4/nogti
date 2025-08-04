@@ -1,4 +1,4 @@
-import { Response, Request } from 'express';
+import { Request, Response } from 'express';
 import { AppDataSource } from '../conf/orm.conf';
 import { NailMasterEntity } from '../entities/nailmaster.entity';
 import { MasterDesignEntity } from '../entities/master-design.entity';
@@ -16,6 +16,8 @@ import { MoreThanOrEqual } from 'typeorm';
 import { MasterRatingEntity } from '../entities';
 import { validate as uuidValidate } from 'uuid';
 import { instanceToInstance, instanceToPlain } from 'class-transformer';
+import { JwtUtil } from '../utils/jwt.util';
+import { AuthResponse } from '../types/api.type';
 
 export class MasterController {
     /**
@@ -347,13 +349,42 @@ export class MasterController {
 
             const updatedMaster = await masterRepository.save(master);
 
+            // Генерируем новые токены с обновленными данными
+            const tokenPayload = {
+                userId: updatedMaster.id,
+                email: updatedMaster.email,
+                username: updatedMaster.username,
+                role: updatedMaster.role,
+                isGuest: updatedMaster.isGuest,
+                fullName: updatedMaster.fullName,
+                phone: updatedMaster.phone,
+                avatar: (updatedMaster as any).avatar
+            };
+
+            const accessToken = JwtUtil.generateAccessToken(tokenPayload);
+            const refreshToken = JwtUtil.generateRefreshToken(tokenPayload);
+
             // Скрываем пароль
             const { password, ...masterData } = updatedMaster;
 
-            const response: ApiResponse<Partial<NailMasterEntity>> = {
+            const authResponse: AuthResponse = {
+                user: {
+                    id: updatedMaster.id,
+                    email: updatedMaster.email,
+                    username: updatedMaster.username,
+                    role: updatedMaster.role,
+                    fullName: updatedMaster.fullName,
+                    isGuest: updatedMaster.isGuest,
+                    avatar: (updatedMaster as any).avatar
+                },
+                token: accessToken,
+                refreshToken: refreshToken
+            };
+
+            const response: ApiResponse<AuthResponse> = {
                 success: true,
-                data: masterData,
-                message: 'Профиль обновлен'
+                data: authResponse,
+                message: 'Профиль мастера успешно обновлен. Новые токены сгенерированы.'
             };
 
             res.json(response);
@@ -1105,8 +1136,8 @@ export class MasterController {
             const serviceDesign = new MasterServiceDesignEntity();
             serviceDesign.masterService = service;
             serviceDesign.nailDesign = design;
-            // Стоимость дизайна должна соответствовать стоимости услуги, а не оригинальной цене дизайна
-            serviceDesign.customPrice = customPrice || service.price;
+            // customPrice теперь хранит только дополнительную стоимость дизайна
+            serviceDesign.customPrice = customPrice || 0;
             serviceDesign.additionalDuration = additionalDuration || 0;
             serviceDesign.notes = notes || '';
             serviceDesign.isActive = true;

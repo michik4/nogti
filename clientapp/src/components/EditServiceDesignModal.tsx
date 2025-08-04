@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { MasterServiceDesign } from "@/types/master.types";
+import { formatPrice } from "@/utils/format.util";
 
 interface EditServiceDesignModalProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ const EditServiceDesignModal = ({
 
           {/* Цена */}
           <div className="space-y-2">
-            <Label htmlFor="customPrice">Цена дизайна (₽)</Label>
+            <Label htmlFor="customPrice">Дополнительная стоимость дизайна (₽)</Label>
             <Input
               id="customPrice"
               type="number"
@@ -120,12 +121,14 @@ const EditServiceDesignModal = ({
               step="50"
               value={formData.customPrice}
               onChange={(e) => handleInputChange('customPrice', Number(e.target.value))}
-              placeholder={baseServicePrice.toString()}
+              placeholder="0"
             />
             <p className="text-xs text-muted-foreground">
-              {formData.customPrice === baseServicePrice 
-                ? 'Введите цену доплаты за дизайн'
-                : `${formData.customPrice > baseServicePrice ? 'Доплата' : 'Скидка'}: ${Math.abs(formData.customPrice - baseServicePrice)}₽`
+              {formData.customPrice === 0 
+                ? 'Без доплаты'
+                : formData.customPrice > 0 
+                  ? `Доплата: +${formatPrice(formData.customPrice)}`
+                  : `Скидка: ${formatPrice(formData.customPrice)}`
               }
             </p>
           </div>

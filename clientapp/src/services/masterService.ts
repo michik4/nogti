@@ -1,7 +1,7 @@
 import { apiService as api } from './api';
 import { MasterProfile, Master } from '@/types/user.types';
 import { MasterService, MasterServiceDesign, MasterStats } from '@/types/master.types';
-import { ApiResponse } from '@/types/api.types';
+import { ApiResponse, AuthResponse } from '@/types/api.types';
 
 export const masterService = {
   // Получение всех мастеров
@@ -18,9 +18,16 @@ export const masterService = {
   },
 
   // Обновление профиля мастера
-  updateMasterProfile: async (data: Partial<Master>): Promise<MasterProfile> => {
-    const response = await api.put<MasterProfile>('/masters/profile', data);
-    return response.data as MasterProfile;
+  updateMasterProfile: async (data: Partial<Master>): Promise<ApiResponse<AuthResponse>> => {
+    const response = await api.put<AuthResponse>('/masters/profile', data);
+    
+    // Если обновление прошло успешно и получены новые токены, обновляем их
+    if (response.success && response.data && response.data.token && response.data.refreshToken) {
+      console.log('Получены новые токены после обновления профиля мастера');
+      api.setTokens(response.data.token, response.data.refreshToken);
+    }
+    
+    return response;
   },
 
   // Получение статистики мастера

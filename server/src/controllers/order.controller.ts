@@ -7,11 +7,13 @@ import { ClientEntity } from '../entities/client.entity';
 import { MasterServiceEntity } from '../entities/master-service.entity';
 import { MasterServiceDesignEntity } from '../entities/master-service-design.entity';
 import { OrderDesignSnapshotEntity } from '../entities/order-design-snapshot.entity';
+import { ScheduleEntity, ScheduleStatus } from '../entities/schedule.entity';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { ApiResponse, PaginatedResponse } from '../types/api.type';
 import { Like, ILike } from 'typeorm';
 import { DesignSnapshotUtil } from '../utils/design-snapshot.util';
 import { OrderDesignUtil } from '../utils/order-design.util';
+import { ScheduleUtil } from '../repos/schedule.repos';
 
 export class OrderController {
     /**
@@ -277,6 +279,14 @@ export class OrderController {
 
             const updatedOrder = await orderRepository.save(order);
 
+            // Блокируем временное окно для этого заказа
+            try {
+                await ScheduleUtil.blockTimeSlotForOrder(order);
+            } catch (error) {
+                console.error('Ошибка при блокировке временного окна:', error);
+                // Не прерываем выполнение, так как заказ уже подтвержден
+            }
+
             const response: ApiResponse<OrderEntity> = {
                 success: true,
                 data: updatedOrder,
@@ -419,6 +429,16 @@ export class OrderController {
 
             const updatedOrder = await orderRepository.save(order);
 
+            // Разблокируем временное окно, если заказ был подтвержден
+            if (order.confirmedDateTime) {
+                try {
+                    await ScheduleUtil.unblockTimeSlotForOrder(order);
+                } catch (error) {
+                    console.error('Ошибка при разблокировке временного окна:', error);
+                    // Не прерываем выполнение, так как заказ уже отклонен
+                }
+            }
+
             const response: ApiResponse<OrderEntity> = {
                 success: true,
                 data: updatedOrder,
@@ -483,6 +503,14 @@ export class OrderController {
 
             const updatedOrder = await orderRepository.save(order);
 
+            // Блокируем временное окно для предложенного времени
+            try {
+                await ScheduleUtil.blockTimeSlotForProposedTime(order);
+            } catch (error) {
+                console.error('Ошибка при блокировке временного окна:', error);
+                // Не прерываем выполнение, так как заказ уже подтвержден
+            }
+
             const response: ApiResponse<OrderEntity> = {
                 success: true,
                 data: updatedOrder,
@@ -546,6 +574,16 @@ export class OrderController {
             order.status = OrderStatus.CANCELLED;
 
             const updatedOrder = await orderRepository.save(order);
+
+            // Разблокируем временное окно, если заказ был подтвержден
+            if (order.confirmedDateTime) {
+                try {
+                    await ScheduleUtil.unblockTimeSlotForOrder(order);
+                } catch (error) {
+                    console.error('Ошибка при разблокировке временного окна:', error);
+                    // Не прерываем выполнение, так как заказ уже отменен
+                }
+            }
 
             const response: ApiResponse<OrderEntity> = {
                 success: true,
@@ -799,6 +837,14 @@ export class OrderController {
             // Увеличиваем счетчик выполненных заказов у мастера
             const masterRepository = AppDataSource.getRepository(NailMasterEntity);
             await masterRepository.increment({ id: userId }, 'totalOrders', 1);
+
+            // Разблокируем временное окно после завершения заказа
+            try {
+                await ScheduleUtil.unblockTimeSlotForOrder(order);
+            } catch (error) {
+                console.error('Ошибка при разблокировке временного окна:', error);
+                // Не прерываем выполнение, так как заказ уже завершен
+            }
 
             const response: ApiResponse<OrderEntity> = {
                 success: true,

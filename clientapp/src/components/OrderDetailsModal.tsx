@@ -117,7 +117,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
   // Повторная запись
   const handleBookAgain = () => {
-    const designId = order.nailDesign?.id || order.designSnapshot?.originalDesignId;
+    const designId = order.designSnapshot?.originalDesignId;
     if (designId && onBookAgain) {
       onBookAgain(designId);
     } else {
@@ -182,7 +182,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           </Card>
 
           {/* Дизайн (если выбран) */}
-          {(order.nailDesign || order.designSnapshot) && (
+          {order.designSnapshot && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -194,52 +194,30 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <img 
-                      src={getImageUrl((order.nailDesign || order.designSnapshot)?.imageUrl) || '/placeholder.svg'} 
-                      alt={(order.nailDesign || order.designSnapshot)?.title}
+                      src={getImageUrl(order.designSnapshot?.imageUrl) || '/placeholder.svg'} 
+                      alt={order.designSnapshot?.title}
                       className="w-20 h-20 rounded-lg object-cover border border-border"
                     />
                   </div>
                   
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">
-                      {(order.nailDesign || order.designSnapshot)?.title}
+                      {order.designSnapshot?.title}
                     </h3>
                     <p className="text-muted-foreground">
-                      {(order.nailDesign || order.designSnapshot)?.description || 'Описание отсутствует'}
+                      {order.designSnapshot?.description || 'Описание отсутствует'}
                     </p>
                     <div className="flex items-center gap-4 mt-2">
                       <Badge variant="secondary">
-                        {(order.nailDesign || order.designSnapshot)?.type === 'basic' ? 'Базовый' : 'Дизайнерский'}
+                        {order.designSnapshot?.type === 'basic' ? 'Базовый' : 'Дизайнерский'}
                       </Badge>
-                      {(order.nailDesign || order.designSnapshot)?.color && (
+                      {order.designSnapshot?.color && (
                         <Badge variant="outline">
-                          Цвет: {(order.nailDesign || order.designSnapshot)?.color}
+                          Цвет: {order.designSnapshot?.color}
                         </Badge>
                       )}
                     </div>
                     
-                    {/* Дополнительная информация о дизайне */}
-                    {order.nailDesign && (
-                      <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Лайков:</span>
-                          <span className="ml-1 font-medium">{order.nailDesign.likesCount || 0}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Заказов:</span>
-                          <span className="ml-1 font-medium">{order.nailDesign.ordersCount || 0}</span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Информация о снимке дизайна */}
-                    {order.designSnapshot && (
-                      <div className="mt-3 text-sm">
-                        <Badge variant="outline" className="text-xs">
-                          Снимок дизайна
-                        </Badge>
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardContent>
@@ -342,12 +320,12 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                       <span className="font-medium text-sm">Услуга</span>
                       <p className="text-xs text-muted-foreground">{order.masterService?.name}</p>
                     </div>
-                  </div>
+                  </div>вава
                   <span className="font-semibold text-primary">{formatPrice(order.masterService?.price || 0)}</span>
                 </div>
                 
                 {/* Дизайн (если есть) */}
-                {order.nailDesign && (
+                {order.designSnapshot && (
                   <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg border border-secondary/30">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
@@ -355,7 +333,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                       </div>
                       <div>
                         <span className="font-medium text-sm">Дизайн</span>
-                        <p className="text-xs text-muted-foreground">{order.nailDesign.title}</p>
+                        <p className="text-xs text-muted-foreground">{order.designSnapshot.title}</p>
                       </div>
                     </div>
                     <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">
@@ -364,12 +342,12 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   </div>
                 )}
               </div>
-              
+
               {/* Итоговая сумма */}
               <div className="flex justify-between items-center pt-4 border-t border-border">
                 <div>
                   <span className="text-lg font-semibold">Итого к оплате</span>
-                  {order.nailDesign && (
+                  {order.designSnapshot && (
                     <p className="text-xs text-muted-foreground">Включая дизайн</p>
                   )}
                 </div>

@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import { ApiResponse, LoginRequest, RegisterRequest } from '@/types/api.types';
+import { ApiResponse, LoginRequest, RegisterRequest, AuthResponse } from '@/types/api.types';
 import { User, Client, Master } from '@/types/user.types';
 
 export interface LoginCredentials {
@@ -60,8 +60,16 @@ export const userService = {
     return apiService.get<Client | Master>(endpoint);
   },
 
-  async updateProfile(userId: string, updates: Partial<User>): Promise<ApiResponse<Client | Master>> {
-    return apiService.put<Client | Master>(`/auth/profile`, updates);
+  async updateProfile(userId: string, updates: Partial<User>): Promise<ApiResponse<AuthResponse>> {
+    const response = await apiService.put<AuthResponse>(`/auth/profile`, updates);
+    
+    // Если обновление прошло успешно и получены новые токены, обновляем их
+    if (response.success && response.data && response.data.token && response.data.refreshToken) {
+      console.log('Получены новые токены после обновления профиля');
+      apiService.setTokens(response.data.token, response.data.refreshToken);
+    }
+    
+    return response;
   },
 
   async logout(): Promise<ApiResponse<null>> {

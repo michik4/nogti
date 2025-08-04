@@ -733,13 +733,42 @@ export class AuthController {
                 return;
             }
 
+            // Генерируем новые токены с обновленными данными
+            const tokenPayload = {
+                userId: updatedUser.id,
+                email: updatedUser.email,
+                username: updatedUser.username,
+                role: updatedUser.role,
+                isGuest: updatedUser.isGuest,
+                fullName: (updatedUser as any).fullName,
+                phone: (updatedUser as any).phone,
+                avatar: (updatedUser as any).avatar
+            };
+
+            const accessToken = JwtUtil.generateAccessToken(tokenPayload);
+            const refreshToken = JwtUtil.generateRefreshToken(tokenPayload);
+
             // Удаляем пароль из ответа
             const { password, ...userWithoutPassword } = updatedUser;
 
-            const response: ApiResponse = {
+            const authResponse: AuthResponse = {
+                user: {
+                    id: updatedUser.id,
+                    email: updatedUser.email,
+                    username: updatedUser.username,
+                    role: updatedUser.role,
+                    fullName: (updatedUser as any).fullName,
+                    isGuest: updatedUser.isGuest,
+                    avatar: (updatedUser as any).avatar
+                },
+                token: accessToken,
+                refreshToken: refreshToken
+            };
+
+            const response: ApiResponse<AuthResponse> = {
                 success: true,
-                data: userWithoutPassword,
-                message: 'Профиль успешно обновлен'
+                data: authResponse,
+                message: 'Профиль успешно обновлен. Новые токены сгенерированы.'
             };
 
             res.json(response);

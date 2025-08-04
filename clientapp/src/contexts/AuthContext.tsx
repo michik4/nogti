@@ -385,15 +385,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!authService.isAuthenticated()) return;
 
     try {
-      // Временно отключено автоматическое обновление с сервера для избежания проблем с моковыми данными
-      console.log('Автоматическое обновление профиля временно отключено');
-      
-      // Используем только данные из JWT токена
+      // Получаем актуальные данные пользователя из JWT токена
       const currentUser = authService.getCurrentUser();
-      if (currentUser && !user) {
-        console.log('Загружаем данные из JWT токена:', currentUser);
+      if (currentUser) {
+        console.log('Обновляем данные пользователя из JWT токена:', currentUser);
         setUser(currentUser);
         clearGuestSession();
+      } else {
+        console.warn('Не удалось получить данные пользователя из токена');
       }
     } catch (error) {
       console.error('Ошибка обновления пользователя:', error);

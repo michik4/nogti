@@ -1,4 +1,6 @@
 import { OrderStatus } from '@/types/booking.types';
+import { Order } from "@/types/booking.types";
+import { MasterServiceDesign } from "@/types/master.types";
 
 /**
  * Получение цвета для статуса заказа
@@ -147,4 +149,68 @@ export const canCompleteOrder = (status: OrderStatus, confirmedDateTime?: string
   if (now > maxCompletionTime) return false;
   
   return true;
+}; 
+
+/**
+ * Рассчитывает общую стоимость заказа с учетом дизайна
+ */
+export const calculateOrderTotalPrice = (order: Order): number => {
+  let total = order.price || order.masterService?.price || 0;
+  
+  // Если есть дизайн с customPrice, добавляем его стоимость
+  if (order.nailDesign && order.price && order.masterService?.price) {
+    // Вычисляем стоимость дизайна как разность между общей стоимостью и стоимостью услуги
+    const designPrice = order.price - order.masterService.price;
+    if (designPrice > 0) {
+      total = order.price; // Используем уже рассчитанную общую стоимость
+    }
+  }
+  
+  return total;
+};
+
+/**
+ * Рассчитывает стоимость дизайна в заказе
+ */
+export const calculateOrderDesignPrice = (order: Order): number => {
+  if (!order.price || !order.masterService?.price) return 0;
+  
+  const designPrice = order.price - order.masterService.price;
+  return designPrice > 0 ? designPrice : 0;
+};
+
+/**
+ * Проверяет, есть ли дизайн в заказе
+ */
+export const hasOrderDesign = (order: Order): boolean => {
+  return !!(order.nailDesign || order.designSnapshot);
+};
+
+/**
+ * Получает информацию о дизайне в заказе
+ */
+export const getOrderDesignInfo = (order: Order) => {
+  if (order.nailDesign) {
+    return {
+      id: order.nailDesign.id,
+      title: order.nailDesign.title,
+      description: order.nailDesign.description,
+      imageUrl: order.nailDesign.imageUrl,
+      type: order.nailDesign.type,
+      color: order.nailDesign.color
+    };
+  }
+  
+  if (order.designSnapshot) {
+    return {
+      id: order.designSnapshot.id,
+      title: order.designSnapshot.title,
+      description: order.designSnapshot.description,
+      imageUrl: order.designSnapshot.imageUrl,
+      type: order.designSnapshot.type,
+      color: order.designSnapshot.color
+    };
+  }
+  
+  return null;
 }; 

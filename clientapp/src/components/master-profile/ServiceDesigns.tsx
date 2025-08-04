@@ -112,7 +112,10 @@ const ServiceDesigns = ({ serviceId, serviceName, onDesignClick }: ServiceDesign
                   
                   
                   <span className="text-sm font-semibold text-primary">
-                    {serviceDesign.customPrice ? `+${roundPrice(serviceDesign.customPrice)}₽` : 'В цене услуги'}
+                    {serviceDesign.customPrice && serviceDesign.customPrice > 0 
+                  ? `+${roundPrice(serviceDesign.customPrice)}₽` 
+                  : 'В цене услуги'
+                }
                   </span>
                 </div>
                 

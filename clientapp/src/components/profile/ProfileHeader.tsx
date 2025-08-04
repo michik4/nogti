@@ -6,23 +6,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Client, Master, Guest } from "@/types/user.types";
+import { Client, Master, Guest, User as UserType } from "@/types/user.types";
 import { useNavigate } from "react-router-dom";
 import { userService, ClientStats } from "@/services/userService";
 import AvatarUpload from "@/components/ui/avatar-upload";
 import { getImageUrl } from "@/utils/image.util";
+import { formatDate } from "@/utils/format.util";
 
 interface ProfileHeaderProps {
   onEditProfile: () => void;
   onConvertGuest: () => void;
+  userData?: UserType | Guest;
 }
 
 /**
  * Компонент заголовка профиля пользователя
  * Отображает основную информацию о пользователе и кнопки действий
  */
-const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) => {
-  const { user: currentUser, isGuest } = useAuth();
+const ProfileHeader = ({ onEditProfile, onConvertGuest, userData }: ProfileHeaderProps) => {
+  const { user: currentUser, isGuest, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [clientStats, setClientStats] = useState<ClientStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -30,26 +32,10 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
   const isGuestUser = isGuest();
   const isClientUser = !isGuestUser && 'role' in currentUser && currentUser.role === 'client';
 
-  // Загружаем статистику клиента
-  useEffect(() => {
-    if (isClientUser) {
-      const loadClientStats = async () => {
-        setIsLoadingStats(true);
-        try {
-          const stats = await userService.getClientStats();
-          setClientStats(stats);
-        } catch (error) {
-          console.error('Ошибка загрузки статистики клиента:', error);
-        } finally {
-          setIsLoadingStats(false);
-        }
-      };
+  // Используем переданные данные профиля или данные из контекста
+  const displayUser = userData || currentUser;
 
-      loadClientStats();
-    }
-  }, [isClientUser]);
-
-  if (!currentUser) return null;
+  if (!displayUser) return null;
 
   // Функция для обработки русского текста
   const processRussianText = (text: string | undefined): string => {
@@ -70,27 +56,66 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
   // Улучшенная логика получения имени пользователя с приоритетом серверных данных
   const displayName = (() => {
     // Для гостевых пользователей используем name
-    if (isGuestUser && 'name' in currentUser) {
-      return processRussianText(currentUser.name);
+    if (isGuestUser && 'name' in displayUser) {
+      return processRussianText(displayUser.name);
     }
     
     // Для авторизованных пользователей приоритет у fullName
-    if ('fullName' in currentUser && currentUser.fullName) {
-      const processedName = processRussianText(currentUser.fullName);
-      console.log('Используется fullName из профиля:', processedName);
+    if ('fullName' in displayUser && displayUser.fullName) {
+      const processedName = processRussianText(displayUser.fullName);
+      console.log('ProfileHeader: Используется fullName из профиля:', processedName);
       return processedName;
     }
     
     // Fallback на name
-    if ('name' in currentUser && currentUser.name) {
-      const processedName = processRussianText(currentUser.name);
-      console.log('Используется name из профиля:', processedName);
+    if ('name' in displayUser && displayUser.name) {
+      const processedName = processRussianText(displayUser.name);
+      console.log('ProfileHeader: Используется name из профиля:', processedName);
       return processedName;
     }
     
     // Последний fallback на email
-    console.log('Используется email как имя пользователя:', currentUser.email);
-    return currentUser.email;
+    const email = 'email' in displayUser ? displayUser.email : '';
+    console.log('ProfileHeader: Используется email как имя пользователя:', email);
+    return email;
+  })();
+
+  // Получаем email пользователя
+  const userEmail = (() => {
+    if ('email' in displayUser && typeof displayUser.email === 'string') {
+      return displayUser.email;
+    }
+    return '';
+  })();
+
+  // Получаем местоположение пользователя
+  const userLocation = (() => {
+    if ('location' in displayUser && displayUser.location && typeof displayUser.location === 'string') {
+      return processRussianText(displayUser.location);
+    }
+    if ('address' in displayUser && displayUser.address && typeof displayUser.address === 'string') {
+      return processRussianText(displayUser.address);
+    }
+    return 'Не указано';
+  })();
+
+  // Получаем дату регистрации
+  const joinDate = (() => {
+    if (isGuestUser && 'joinDate' in displayUser && typeof displayUser.joinDate === 'string') {
+      return formatDate(displayUser.joinDate);
+    }
+    if ('createdAt' in displayUser && displayUser.createdAt && typeof displayUser.createdAt === 'string') {
+      return formatDate(displayUser.createdAt);
+    }
+    return 'недавно';
+  })();
+
+  // Получаем аватар пользователя
+  const userAvatar = (() => {
+    if ('avatar' in displayUser && typeof displayUser.avatar === 'string') {
+      return displayUser.avatar;
+    }
+    return '';
   })();
 
   return (
@@ -99,14 +124,16 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
         <div className="flex flex-col md:flex-row items-start gap-6">
           {/* Аватар пользователя с возможностью загрузки */}
           <AvatarUpload
-            currentAvatar={currentUser.avatar}
+            currentAvatar={userAvatar}
             userName={displayName}
             size="lg"
             showUploadButton={false}
             className="self-center md:self-start"
             onAvatarUpdate={(newAvatarUrl) => {
               // Callback уже обрабатывается внутри AvatarUpload через updateUser
-              console.log('Аватар обновлен в ProfileHeader:', newAvatarUrl);
+              console.log('ProfileHeader: Аватар обновлен:', newAvatarUrl);
+              // Не вызываем refreshUser здесь, так как это может вызвать цикличный рендер
+              // AvatarUpload уже обновляет токены автоматически
             }}
           />
           
@@ -119,15 +146,15 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
                   Гостевой аккаунт
                 </Badge>
               )}
-              <p className="text-muted-foreground">{currentUser.email}</p>
+              <p className="text-muted-foreground">{userEmail}</p>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  {'location' in currentUser ? currentUser.location : 'Не указано'}
+                  {userLocation}
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  С {'joinDate' in currentUser ? currentUser.joinDate : 'недавно'}
+                  С {joinDate}
                 </span>
               </div>
             </div>
@@ -154,9 +181,6 @@ const ProfileHeader = ({ onEditProfile, onConvertGuest }: ProfileHeaderProps) =>
               )}
             </div>
           </div>
-          
-          
-          
         </div>
       </CardContent>
     </Card>

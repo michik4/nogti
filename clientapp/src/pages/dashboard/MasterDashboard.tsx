@@ -19,6 +19,7 @@ import { AddServiceModal } from "@/components/AddServiceModal";
 import BrowseDesignsModal from "@/components/BrowseDesignsModal";
 import AddDesignModal from "@/components/AddDesignModal";
 import EditServiceDesignModal from "@/components/EditServiceDesignModal";
+import AddDesignToServiceModal from "@/components/AddDesignToServiceModal";
 import { designService, NailDesign } from "@/services/designService";
 import MasterOrdersTab from "./components/MasterOrdersTab";
 import AvatarUpload from "@/components/ui/avatar-upload";
@@ -43,8 +44,10 @@ const MasterDashboard = () => {
   const [isBrowseDesignsOpen, setIsBrowseDesignsOpen] = useState(false);
   const [isAddDesignOpen, setIsAddDesignOpen] = useState(false);
   const [isEditServiceDesignOpen, setIsEditServiceDesignOpen] = useState(false);
+  const [isAddDesignToServiceOpen, setIsAddDesignToServiceOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<MasterService | null>(null);
   const [selectedServiceDesign, setSelectedServiceDesign] = useState<MasterServiceDesign | null>(null);
+  const [selectedDesignForService, setSelectedDesignForService] = useState<NailDesign | null>(null);
   const [serviceDesigns, setServiceDesigns] = useState<{ [serviceId: string]: MasterServiceDesign[] }>({});
   const [masterProfile, setMasterProfile] = useState<Master | null>(null);
   const [isScheduleManagerOpen, setIsScheduleManagerOpen] = useState(false);
@@ -266,6 +269,20 @@ const MasterDashboard = () => {
   const handleSelectDesign = async (design: NailDesign) => {
     if (!selectedService) return;
 
+    // Открываем модальное окно для настройки дизайна
+    setSelectedDesignForService(design);
+    setIsAddDesignToServiceOpen(true);
+    setIsBrowseDesignsOpen(false);
+  };
+
+  const handleConfirmAddDesignToService = async (design: NailDesign, settings: {
+    additionalPrice: number;
+    additionalDuration: number;
+    notes: string;
+    isActive: boolean;
+  }) => {
+    if (!selectedService) return;
+
     try {
       if (!selectedService.id) {
         throw new Error('ID выбранной услуги не найден');
@@ -275,15 +292,13 @@ const MasterDashboard = () => {
         throw new Error('ID выбранного дизайна не найден');
       }
       
-      // Стоимость дизайна в рамках услуги должна соответствовать стоимости услуги
-      const customPrice = selectedService.price;
       const newServiceDesign = await masterService.addDesignToService(
         selectedService.id,
         design.id,
         {
-          customPrice,
-          additionalDuration: 0,
-          notes: `Дизайн добавлен с ценой услуги ${customPrice}₽`
+          customPrice: settings.additionalPrice,
+          additionalDuration: settings.additionalDuration,
+          notes: settings.notes
         }
       );
 
@@ -296,7 +311,7 @@ const MasterDashboard = () => {
         [selectedService.id]: [...(prev[selectedService.id] || []), newServiceDesign]
       }));
 
-      toast.success(`Дизайн "${design.title}" добавлен к услуге за ${customPrice}₽`);
+      toast.success(`Дизайн "${design.title}" добавлен к услуге с доплатой ${formatPrice(settings.additionalPrice)}`);
     } catch (error) {
       console.error('Ошибка добавления дизайна к услуге:', error);
       toast.error('Не удалось добавить дизайн к услуге');
@@ -813,7 +828,10 @@ const MasterDashboard = () => {
                                     </div>
                                   </div>
                                   <div className="absolute bottom-1 left-1 bg-black/75 text-white text-xs px-1 rounded">
-                                    {formatPrice(serviceDesign.customPrice || service?.price || 0)}
+                                    {serviceDesign.customPrice && serviceDesign.customPrice > 0 
+                                      ? `+${formatPrice(serviceDesign.customPrice)}`
+                                      : formatPrice(service?.price || 0)
+                                    }
                                   </div>
                                   {!serviceDesign.isActive && (
                                     <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 rounded">
@@ -983,6 +1001,21 @@ const MasterDashboard = () => {
         isOpen={isScheduleManagerOpen}
         onClose={() => setIsScheduleManagerOpen(false)}
       />
+
+      {selectedService && selectedDesignForService && (
+        <AddDesignToServiceModal
+          isOpen={isAddDesignToServiceOpen}
+          onClose={() => {
+            setIsAddDesignToServiceOpen(false);
+            setSelectedDesignForService(null);
+          }}
+          onConfirm={handleConfirmAddDesignToService}
+          design={selectedDesignForService}
+          serviceName={selectedService.name}
+          servicePrice={selectedService.price}
+          serviceDuration={selectedService.duration}
+        />
+      )}
     </div>
   );
 };

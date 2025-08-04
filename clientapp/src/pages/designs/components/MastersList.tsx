@@ -18,6 +18,7 @@ import { getImageUrl } from '@/utils/image.util';
 import { formatRatingWithReviews } from '@/utils/rating.util';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice, roundPrice } from '@/utils/format.util';
+import { calculateOrderTotalPrice } from '@/utils/order.util';
 import styles from './MastersList.module.css';
 
 interface MastersListProps {

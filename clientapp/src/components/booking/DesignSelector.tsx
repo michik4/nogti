@@ -149,7 +149,7 @@ const DesignSelector = ({ serviceId, selectedDesignId, onDesignSelect }: DesignS
 
                   {/* Дополнительная информация */}
                   <div className="flex items-center gap-2 mt-1">
-                    {serviceDesign.customPrice && (
+                    {serviceDesign.customPrice && serviceDesign.customPrice > 0 && (
                       <span className="text-xs text-primary font-medium">
                         +{formatPrice(serviceDesign.customPrice)}
                       </span>

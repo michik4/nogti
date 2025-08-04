@@ -199,7 +199,7 @@ const DesignSelectionModal = ({
 
                           {/* Цена и время */}
                           <div className="flex items-center justify-between text-sm">
-                            {design.customPrice ? (
+                            {design.customPrice && design.customPrice > 0 ? (
                               <span className="font-medium text-primary">
                                 +{roundPrice(design.customPrice)}₽
                               </span>
@@ -256,7 +256,7 @@ const DesignSelectionModal = ({
                   <div>
                     <h4 className="font-medium">{selectedDesign.nailDesign.title}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {selectedDesign.customPrice ? `+${roundPrice(selectedDesign.customPrice)}₽` : 'Бесплатно'}
+                      {selectedDesign.customPrice && selectedDesign.customPrice > 0 ? `+${roundPrice(selectedDesign.customPrice)}₽` : 'Бесплатно'}
                       {selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 && 
                         ` • +${selectedDesign.additionalDuration} мин`
                       }

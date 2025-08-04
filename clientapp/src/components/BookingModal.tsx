@@ -111,7 +111,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
         nailDesignId: selectedDesign?.nailDesign.id,
         nailMasterId: masterId,
         requestedDateTime: requestedDateTime.toISOString(),
-        description: `Запись на ${service.name}${selectedDesign ? ` - ${selectedDesign.nailDesign.title}` : ''} (${service.price}₽${selectedDesign?.customPrice ? ` + ${selectedDesign.customPrice}₽` : ''})`,
+        description: `Запись на ${service.name}${selectedDesign ? ` - ${selectedDesign.nailDesign.title}` : ''} (${service.price}₽${selectedDesign?.customPrice && selectedDesign.customPrice > 0 ? ` + ${selectedDesign.customPrice}₽` : ''})`,
         clientNotes: clientInfo.notes || undefined
       };
 
@@ -158,9 +158,9 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
   // Функция для расчета общей стоимости
   const calculateTotalPrice = () => {
     let total = service?.price || 0;
-    if (selectedDesign?.customPrice) {
-      total += selectedDesign.customPrice;
-    }
+          if (selectedDesign?.customPrice && selectedDesign.customPrice > 0) {
+        total += selectedDesign.customPrice;
+      }
     return total;
   };
 
@@ -189,7 +189,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
               <div className="flex items-center gap-4 text-sm">
                 <span className="font-medium text-primary">{formatPrice(service.price)}</span>
                 <span className="text-muted-foreground">{service.duration} мин</span>
-                {selectedDesign?.customPrice && (
+                {selectedDesign?.customPrice && selectedDesign.customPrice > 0 && (
                   <span className="text-xs text-muted-foreground">
                     +{formatPrice(selectedDesign.customPrice)} за дизайн
                   </span>
@@ -228,7 +228,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                         <Badge variant="secondary" className="text-xs">
                           {selectedDesign.nailDesign.type === "basic" ? "Базовый" : "Дизайнерский"}
                         </Badge>
-                        {selectedDesign.customPrice && (
+                        {selectedDesign.customPrice && selectedDesign.customPrice > 0 && (
                           <span className="text-primary font-medium">
                             +{formatPrice(selectedDesign.customPrice)}
                           </span>
@@ -277,7 +277,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                     </div>
                     
                     {/* Дизайн (если выбран) */}
-                    {selectedDesign && selectedDesign.customPrice && (
+                    {selectedDesign && selectedDesign.customPrice && selectedDesign.customPrice > 0 && (
                       <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30 shadow-sm">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">

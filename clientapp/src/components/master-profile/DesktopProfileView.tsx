@@ -24,6 +24,7 @@ import { formatCustomDate } from "@/utils/time.util";
 import { formatPrice } from "@/utils/format.util";
 import { ReviewsSummary } from "../ReviewsSummary";
 import MasterAvailability from "./MasterAvailability";
+import MasterStats from "../MasterStats";
 
 interface DesktopProfileViewProps {
   master: MasterProfile;
@@ -212,6 +213,26 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
                 master={master}
                 onReviewsUpdate={handleReviewsUpdate}
               />
+
+              {/* Статистика мастера */}
+              <div className="mt-6">
+                <h3 className="text-xl font-semibold mb-4">Статистика</h3>
+                <MasterStats
+                  master={{
+                    id: master.id,
+                    fullName: master.fullName || master.username,
+                    rating: master.rating,
+                    reviewsCount: ratings.length,
+                    totalOrders: 0, // Будет добавлено позже
+                    completedOrders: 0, // Будет добавлено позже
+                    pendingOrders: 0, // Будет добавлено позже
+                    averageOrderPrice: 0, // Будет добавлено позже
+                    totalEarnings: 0, // Будет добавлено позже
+                    experienceYears: 0, // Будет добавлено позже
+                    specializations: master.specialties
+                  }}
+                />
+              </div>
             
             </div>
           </div>

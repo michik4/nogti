@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getImageUrl } from "@/utils/image.util";
+import { formatPrice } from "@/utils/format.util";
+import { calculateOrderTotalPrice, hasOrderDesign } from "@/utils/order.util";
 import PageHeader from "@/components/PageHeader";
 
 const AdminDashboard = () => {
@@ -326,24 +328,41 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     {orders.map((order) => (
                       <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <p className="font-medium">Клиент: {order.clientName}</p>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-medium">Клиент: {order.clientName}</p>
+                            <Badge 
+                              variant={
+                                order.status === 'confirmed' ? 'default' :
+                                order.status === 'pending' ? 'secondary' :
+                                order.status === 'completed' ? 'outline' : 'destructive'
+                              }
+                            >
+                              {order.status === 'confirmed' ? 'Подтверждена' :
+                               order.status === 'pending' ? 'Ожидание' :
+                               order.status === 'completed' ? 'Завершена' : 'Отменена'}
+                            </Badge>
+                          </div>
                           <p className="text-sm">Мастер: {order.masterName}</p>
                           <p className="text-sm text-muted-foreground">
                             Дата: {new Date(order.requestedDateTime).toLocaleString()}
                           </p>
+                          {order.designTitle && order.designTitle !== 'Удалён' && (
+                            <p className="text-sm text-muted-foreground">
+                              Дизайн: {order.designTitle}
+                            </p>
+                          )}
                         </div>
-                        <Badge 
-                          variant={
-                            order.status === 'confirmed' ? 'default' :
-                            order.status === 'pending' ? 'secondary' :
-                            order.status === 'completed' ? 'outline' : 'destructive'
-                          }
-                        >
-                          {order.status === 'confirmed' ? 'Подтверждена' :
-                           order.status === 'pending' ? 'Ожидание' :
-                           order.status === 'completed' ? 'Завершена' : 'Отменена'}
-                        </Badge>
+                        <div className="text-right ml-4">
+                          <p className="font-semibold text-lg text-primary">
+                            {formatPrice(order.price || 0)}
+                          </p>
+                          {order.designTitle && order.designTitle !== 'Удалён' && (
+                            <p className="text-xs text-muted-foreground">
+                              (включая дизайн)
+                            </p>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

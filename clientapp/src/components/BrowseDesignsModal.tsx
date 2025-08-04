@@ -79,7 +79,6 @@ const BrowseDesignsModal = ({
   const handleSelectDesign = (masterDesign: any) => {
     // Передаем nailDesign из masterDesign
     onSelectDesign(masterDesign.nailDesign);
-    onClose();
   };
 
   return (
