@@ -1,4 +1,5 @@
-import { api } from './api';
+import { apiService as api} from './api';
+import { ApiResponse } from '@/types/api.types';
 
 export interface MasterStats {
   id: string;
@@ -28,12 +29,12 @@ class MasterStatsService {
    */
   async getMasterStats(masterId: string): Promise<MasterStats> {
     try {
-      const response = await api.get(`/api/masters/${masterId}/stats`);
+      const response = await api.get<MasterStats>(`/api/masters/stats`);
       
-      if (response.data.success && response.data.data) {
-        return response.data.data;
+      if (response.success && response.data) {
+        return response.data;
       } else {
-        throw new Error(response.data.error || 'Не удалось получить статистику мастера');
+        throw new Error(response.error || 'Не удалось получить статистику мастера');
       }
     } catch (error) {
       console.error('Ошибка получения статистики мастера:', error);
@@ -46,12 +47,12 @@ class MasterStatsService {
    */
   async getExtendedMasterStats(masterId: string): Promise<MasterStats> {
     try {
-      const response = await api.get(`/api/masters/${masterId}/stats/extended`);
+      const response = await api.get<MasterStats>(`/api/masters/stats/extended`);
       
-      if (response.data.success && response.data.data) {
-        return response.data.data;
+      if (response.success && response.data) {
+        return response.data;
       } else {
-        throw new Error(response.data.error || 'Не удалось получить расширенную статистику мастера');
+        throw new Error(response.error || 'Не удалось получить расширенную статистику мастера');
       }
     } catch (error) {
       console.error('Ошибка получения расширенной статистики мастера:', error);
@@ -70,12 +71,18 @@ class MasterStatsService {
     totalEarnings: number;
   }> {
     try {
-      const response = await api.get(`/api/masters/${masterId}/orders/stats`);
+      const response = await api.get<{
+        totalOrders: number;
+        completedOrders: number;
+        pendingOrders: number;
+        averageOrderPrice: number;
+        totalEarnings: number;
+      }>(`/api/masters/${masterId}/orders/stats`);
       
-      if (response.data.success && response.data.data) {
-        return response.data.data;
+      if (response.success && response.data) {
+        return response.data;
       } else {
-        throw new Error(response.data.error || 'Не удалось получить статистику заказов');
+        throw new Error(response.error || 'Не удалось получить статистику заказов');
       }
     } catch (error) {
       console.error('Ошибка получения статистики заказов:', error);
@@ -92,12 +99,16 @@ class MasterStatsService {
     ratingDistribution: number[];
   }> {
     try {
-      const response = await api.get(`/api/masters/${masterId}/rating/stats`);
+      const response = await api.get<{
+        rating: number;
+        reviewsCount: number;
+        ratingDistribution: number[];
+      }>(`/api/masters/${masterId}/rating/stats`);
       
-      if (response.data.success && response.data.data) {
-        return response.data.data;
+      if (response.success && response.data) {
+        return response.data;
       } else {
-        throw new Error(response.data.error || 'Не удалось получить статистику рейтингов');
+        throw new Error(response.error || 'Не удалось получить статистику рейтингов');
       }
     } catch (error) {
       console.error('Ошибка получения статистики рейтингов:', error);

@@ -25,6 +25,7 @@ import { formatPrice } from "@/utils/format.util";
 import { ReviewsSummary } from "../ReviewsSummary";
 import MasterAvailability from "./MasterAvailability";
 import MasterStats from "../MasterStats";
+import { masterStatsService } from "@/services/masterStatsService";
 
 interface DesktopProfileViewProps {
   master: MasterProfile;
@@ -42,6 +43,7 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [services, setServices] = useState<MasterService[]>([]);
   const [ratings, setRatings] = useState<masterRating[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<MasterService | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<NailDesign | MasterServiceDesign | null>(null);
@@ -59,6 +61,20 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
       console.error('Ошибка загрузки отзывов:', error);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  const fetchMasterStats = async () => {
+    try {
+      if (!master.id) {
+        console.error('ID мастера не найден');
+        return;
+      }
+      const statsData = await masterStatsService.getMasterStats(master.id);
+      console.log('master stats:', statsData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Ошибка загрузки статистики:', error);
     }
   }
 
@@ -81,6 +97,7 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
 
     fetchServices();
     fetchMasterRatings();
+    fetchMasterStats();
   }, [master.id]);
 
   // Функция для обновления отзывов после добавления нового
@@ -218,17 +235,17 @@ const DesktopProfileView = ({ master, onBack }: DesktopProfileViewProps) => {
               <div className="mt-6">
                 <h3 className="text-xl font-semibold mb-4">Статистика</h3>
                 <MasterStats
-                  master={{
+                  master={stats || {
                     id: master.id,
                     fullName: master.fullName || master.username,
                     rating: master.rating,
                     reviewsCount: ratings.length,
-                    totalOrders: 0, // Будет добавлено позже
-                    completedOrders: 0, // Будет добавлено позже
-                    pendingOrders: 0, // Будет добавлено позже
-                    averageOrderPrice: 0, // Будет добавлено позже
-                    totalEarnings: 0, // Будет добавлено позже
-                    experienceYears: 0, // Будет добавлено позже
+                    totalOrders: 0,
+                    completedOrders: 0,
+                    pendingOrders: 0,
+                    averageOrderPrice: 0,
+                    totalEarnings: 0,
+                    experienceYears: 0,
                     specializations: master.specialties
                   }}
                 />

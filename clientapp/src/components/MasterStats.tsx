@@ -6,8 +6,8 @@ import { Progress } from "@/components/ui/progress";
 
 interface MasterStatsProps {
   master: {
-    id: string;
-    fullName: string;
+    id?: string;
+    fullName?: string;
     rating?: number | string;
     reviewsCount?: number;
     totalOrders?: number;
@@ -17,6 +17,17 @@ interface MasterStatsProps {
     totalEarnings?: number;
     experienceYears?: number;
     specializations?: string[];
+    // Структура данных с сервера
+    todayEarnings?: number;
+    monthlyEarnings?: number;
+    todayClients?: number;
+    monthlyClients?: number;
+    averageRating?: number;
+    completedBookings?: number;
+    pendingRequests?: number;
+    confirmedBookings?: number;
+    canDoDesignsCount?: number;
+    servicesCount?: number;
   };
   className?: string;
 }
@@ -55,8 +66,12 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
   };
 
   const calculateCompletionRate = () => {
-    if (!master.totalOrders || master.totalOrders === 0) return 0;
-    return Math.round((master.completedOrders || 0) / master.totalOrders * 100);
+    // Поддержка обеих структур данных
+    const totalOrders = master.totalOrders || master.completedBookings || 0;
+    const completedOrders = master.completedOrders || master.completedBookings || 0;
+    
+    if (!totalOrders || totalOrders === 0) return 0;
+    return Math.round(completedOrders / totalOrders * 100);
   };
 
   const calculateAverageResponseTime = () => {
@@ -77,22 +92,22 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <span className={`text-2xl font-bold ${getRatingColor(getRatingNumber(master.rating))}`}>
-                {getRatingNumber(master.rating).toFixed(1)}
+              <span className={`text-2xl font-bold ${getRatingColor(getRatingNumber(master.rating || master.averageRating))}`}>
+                {getRatingNumber(master.rating || master.averageRating).toFixed(1)}
               </span>
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
                     className={`h-3 w-3 ${
-                      star <= getRatingNumber(master.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
+                      star <= getRatingNumber(master.rating || master.averageRating) ? "text-yellow-500 fill-current" : "text-gray-300"
                     }`}
                   />
                 ))}
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {getRatingText(getRatingNumber(master.rating))}
+              {getRatingText(getRatingNumber(master.rating || master.averageRating))}
             </p>
             <p className="text-xs text-muted-foreground">
               {master.reviewsCount || 0} отзывов
@@ -107,31 +122,12 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{master.totalOrders || 0}</div>
+            <div className="text-2xl font-bold">{master.totalOrders || master.completedBookings || 0}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
               <CheckCircle className="h-3 w-3 text-green-500" />
-              <span>{master.completedOrders || 0} выполнено</span>
+              <span>{master.completedOrders || master.completedBookings || 0} выполнено</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3 text-yellow-500" />
-              <span>{master.pendingOrders || 0} ожидает</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Средний чек */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Средний чек</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatPrice(master.averageOrderPrice || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              За заказ
-            </p>
+           
           </CardContent>
         </Card>
 
@@ -142,9 +138,9 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{master.experienceYears || 0}</div>
+            <div className="text-2xl font-bold">{master.experienceYears || master.servicesCount || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              лет в профессии
+              {master.experienceYears ? 'лет в профессии' : 'услуг'}
             </p>
           </CardContent>
         </Card>
@@ -164,7 +160,7 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
             </div>
             <Progress value={calculateCompletionRate()} className="h-2" />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{master.completedOrders || 0} из {master.totalOrders || 0}</span>
+              <span>{master.completedOrders || master.completedBookings || 0} из {master.totalOrders || master.completedBookings || 0}</span>
               <span>Выполнено</span>
             </div>
           </CardContent>
@@ -220,13 +216,13 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
               </div>
             </div>
             
-            {master.totalEarnings && master.totalEarnings > 0 && (
+            {(master.totalEarnings || master.monthlyEarnings) && (master.totalEarnings > 0 || master.monthlyEarnings > 0) && (
               <div className="flex items-center gap-3">
                 <TrendingUp className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Общий доход</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatPrice(master.totalEarnings)}
+                    {formatPrice(master.totalEarnings || master.monthlyEarnings || 0)}
                   </p>
                 </div>
               </div>
