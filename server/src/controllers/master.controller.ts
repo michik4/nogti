@@ -554,6 +554,8 @@ export class MasterController {
                 confirmedOrders,
                 // Завершенные заказы
                 completedOrders,
+                // Общее количество заказов
+                totalOrders,
                 // Количество дизайнов "Я так могу"
                 canDoDesignsCount,
                 // Количество услуг
@@ -596,6 +598,12 @@ export class MasterController {
                         status: OrderStatus.COMPLETED
                     }
                 }),
+                // Общее количество заказов
+                orderRepository.count({
+                    where: { 
+                        nailMaster: { id: masterId }
+                    }
+                }),
                 // Количество дизайнов "Я так могу"
                 masterDesignRepository.count({
                     where: { 
@@ -632,7 +640,7 @@ export class MasterController {
                 confirmedBookings: confirmedOrders,
                 canDoDesignsCount,
                 servicesCount,
-                totalOrders: master.totalOrders || 0,
+                totalOrders: totalOrders,
                 reviewsCount: master.reviewsCount || 0
             };
 

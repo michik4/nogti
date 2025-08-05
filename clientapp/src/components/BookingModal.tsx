@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Calendar, Palette, X } from "lucide-react";
+import { Calendar, Clock, Palette, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +18,7 @@ import ClientInfoForm, { ClientInfo } from "./booking/ClientInfoForm";
 import DesignInfo from "./booking/DesignInfo";
 import DesignSelectionModal from "./booking/DesignSelectionModal";
 import ConvertGuestModal from "./ConvertGuestModal";
+import DebugModal from "./DebugModal";
 import React from "react"; // Added missing import
 
 interface BookingModalProps {
@@ -72,7 +73,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
     console.log('isAuthenticated:', isAuthenticated);
     console.log('isClient():', isClient());
     console.log('Token в localStorage:', localStorage.getItem('auth_token'));
-    
+
     if (!selectedSlot || !service) {
       toast.error("Пожалуйста, выберите доступное окно и услугу");
       return;
@@ -158,9 +159,9 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
   // Функция для расчета общей стоимости
   const calculateTotalPrice = () => {
     let total = service?.price || 0;
-          if (selectedDesign?.customPrice && selectedDesign.customPrice > 0) {
-        total += selectedDesign.customPrice;
-      }
+    if (selectedDesign?.customPrice && selectedDesign.customPrice > 0) {
+      total += selectedDesign.customPrice;
+    }
     return total;
   };
 
@@ -178,7 +179,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
           <DialogHeader>
             <DialogTitle>Записаться на маникюр</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             {/* Service Info */}
             <div className="p-4 bg-muted rounded-lg">
@@ -189,10 +190,12 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
               <div className="flex items-center gap-4 text-sm">
                 <span className="font-medium text-primary">{formatPrice(service.price)}</span>
                 <span className="text-muted-foreground">{service.duration} мин</span>
-                {selectedDesign?.customPrice && selectedDesign.customPrice > 0 && (
+                {selectedDesign?.customPrice && selectedDesign.customPrice > 0 ? (
                   <span className="text-xs text-muted-foreground">
                     +{formatPrice(selectedDesign.customPrice)} за дизайн
                   </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Без доплаты</span>
                 )}
               </div>
             </div>
@@ -212,7 +215,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                   {selectedDesign ? 'Изменить дизайн' : 'Выбрать дизайн'}
                 </Button>
               </div>
-              
+
               {/* Selected Design Info */}
               {selectedDesign && (
                 <div className="p-4 bg-muted rounded-lg">
@@ -228,13 +231,20 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                         <Badge variant="secondary" className="text-xs">
                           {selectedDesign.nailDesign.type === "basic" ? "Базовый" : "Дизайнерский"}
                         </Badge>
-                        {selectedDesign.customPrice && selectedDesign.customPrice > 0 && (
+                        {selectedDesign.customPrice && selectedDesign.customPrice > 0 ? (
                           <span className="text-primary font-medium">
                             +{formatPrice(selectedDesign.customPrice)}
                           </span>
+                        ) : (
+                          <span className="text-muted-foreground">Бесплатно</span>
                         )}
-                        {selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 && (
+                        {selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 ? (
                           <span>+{selectedDesign.additionalDuration} мин</span>
+                        ) : (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-xs">{service.duration} мин</span>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -260,7 +270,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <h4 className="font-semibold text-lg text-foreground">Общая стоимость</h4>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {/* Услуга */}
                     <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg border border-border/50">
@@ -275,35 +285,51 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
                       </div>
                       <span className="font-semibold text-primary">{formatPrice(service.price)}</span>
                     </div>
-                    
+
                     {/* Дизайн (если выбран) */}
-                    {selectedDesign && selectedDesign.customPrice && selectedDesign.customPrice > 0 && (
+                    {selectedDesign && (
                       <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30 shadow-sm">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-                            <span className="text-secondary-foreground text-sm font-medium">Д</span>
+                            {selectedDesign.nailDesign.imageUrl ? (
+                              <img
+                                src={getImageUrl(selectedDesign.nailDesign.imageUrl)}
+                                alt={selectedDesign.nailDesign.title}
+                                className="w-full h-full object-cover rounded-full"
+                              />
+                            ) : (
+                              <span className="text-secondary-foreground text-sm font-medium">Д</span>
+                            )}
                           </div>
                           <div>
                             <span className="font-medium text-sm text-foreground">Дизайн</span>
                             <p className="text-xs text-muted-foreground">{selectedDesign.nailDesign.title}</p>
                           </div>
                         </div>
-                        <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">+{formatPrice(selectedDesign.customPrice)}</span>
+                        {selectedDesign.customPrice && selectedDesign.customPrice > 0 ? (
+                          <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">+{formatPrice(selectedDesign.customPrice)}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Без доплаты</span>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
-                
+
                 {/* Итоговая сумма */}
                 <div className="ml-6 p-4 bg-primary/10 rounded-lg border border-primary/30 min-w-[140px]">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary mb-1">
                       {formatPrice(calculateTotalPrice())}
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-xs">{service.duration + (selectedDesign?.additionalDuration || 0)} мин</span>
+                      </div>
                     </div>
                     <div className="text-xs text-muted-foreground font-medium">
                       Итого к оплате
                     </div>
-                    {selectedDesign && selectedDesign.customPrice && (
+                    {selectedDesign && (
                       <div className="text-xs text-muted-foreground mt-1">
                         Включая дизайн
                       </div>
@@ -352,9 +378,9 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
               <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
                 Отмена
               </Button>
-              <Button 
-                onClick={handleBooking} 
-                className="flex-1" 
+              <Button
+                onClick={handleBooking}
+                className="flex-1"
                 disabled={isLoading || !selectedSlot}
               >
                 <Calendar className="w-4 h-4 mr-2" />
@@ -389,6 +415,7 @@ const BookingModal = ({ isOpen, onClose, service, masterId, preselectedDesignId 
         onDesignSelect={handleDesignSelect}
         preselectedDesignId={preselectedDesignId}
       />
+
     </>
   );
 };

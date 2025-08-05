@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice, roundPrice } from '@/utils/format.util';
 import { calculateOrderTotalPrice } from '@/utils/order.util';
 import styles from './MastersList.module.css';
+import DebugModal from '@/components/DebugModal';
 
 interface MastersListProps {
   design: NailDesign;
@@ -36,7 +37,7 @@ export const MastersList: React.FC<MastersListProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [masters, setMasters] = useState<MasterWithServicesForDesign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +52,9 @@ export const MastersList: React.FC<MastersListProps> = ({
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await designService.getMastersForDesign(design.id);
-      
+
       if (response.success && response.data) {
         setMasters(response.data);
       } else {
@@ -72,7 +73,7 @@ export const MastersList: React.FC<MastersListProps> = ({
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours > 0) {
       return `${hours}ч ${mins > 0 ? `${mins}м` : ''}`.trim();
     }
@@ -123,7 +124,7 @@ export const MastersList: React.FC<MastersListProps> = ({
 
         <div className={styles.content}>
           {/* Информация о дизайне */}
-          
+
 
           {/* Список мастеров */}
           <div className={styles.mastersList}>
@@ -176,20 +177,20 @@ export const MastersList: React.FC<MastersListProps> = ({
                         {/* Аватар и основная информация */}
                         <div className={styles.masterHeader}>
                           <Avatar className={styles.avatar}>
-                            <AvatarImage 
-                              src={getAvatarSrc(master)} 
+                            <AvatarImage
+                              src={getAvatarSrc(master)}
                               alt={getMasterName(master)}
                             />
                             <AvatarFallback>
                               {getMasterInitials(master)}
                             </AvatarFallback>
                           </Avatar>
-                          
+
                           <div className={styles.masterInfo}>
                             <h4 className={styles.masterName}>
                               {getMasterName(master)}
                             </h4>
-                            
+
                             {/* Рейтинг */}
                             <div className={styles.rating}>
                               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -233,27 +234,52 @@ export const MastersList: React.FC<MastersListProps> = ({
                             <div key={service.id} className={styles.serviceCard}>
                               <div className={styles.serviceHeader}>
                                 <h5 className={styles.serviceName}>{service.name}</h5>
+                                <DebugModal
+                                  data={{
+                                    service,
+                                    customPriceExists: service.customPrice && Number(service.customPrice) > 0,
+                                  }}
+                                />
                                 <div className={styles.servicePrice}>
                                   {(() => {
                                     // Используем totalPrice из API, который уже правильно рассчитан
                                     const totalPrice = Number(service.totalPrice) || 0;
-                                    return isNaN(totalPrice) || totalPrice === 0 ? 'Цена не указана' : formatPrice(totalPrice);
+                                    return (service.customPrice && Number(service.customPrice) > 0) ? (
+                                      <div className="text-right">
+                                        <div className="text-sm font-semibold text-foreground">
+                                          <div className="text-[10px] text-muted-foreground">цена услуги</div>
+                                          {formatPrice(service.basePrice)}
+                                        </div>
+                                        <div className="text-xs text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md font-medium">
+                                        <div className="text-[10px] text-muted-foreground">доплата за дизайн</div>
+                                          +{formatPrice(totalPrice)}
+                                          
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      // цена услуги
+                                      <div className="text-xs text-muted-foreground">
+                                        <div>{formatPrice(service.basePrice)}</div>
+                                        <div className="text-[10px]">цена услуги</div>
+                                      </div>
+                                      
+                                    );
                                   })()}
                                 </div>
                               </div>
-                              
+
                               <div className={styles.serviceDetails}>
                                 <div className={styles.serviceInfo}>
                                   <Clock className="w-4 h-4 text-blue-600" />
                                   <span>{formatDuration(service.totalDuration)}</span>
                                 </div>
-                                
-                                
-                                
-                               
+
+
+
+
                               </div>
 
-                              
+
 
                               {service.notes && (
                                 <p className={styles.serviceNotes}>
@@ -261,7 +287,7 @@ export const MastersList: React.FC<MastersListProps> = ({
                                 </p>
                               )}
 
-                              
+
                             </div>
                           ))}
                         </div>
@@ -269,7 +295,7 @@ export const MastersList: React.FC<MastersListProps> = ({
                         {/* Описание */}
                         {master.description && (
                           <p className={styles.masterDescription}>
-                            {master.description.length > 150 
+                            {master.description.length > 150
                               ? `${master.description.substring(0, 150)}...`
                               : master.description
                             }
@@ -278,16 +304,16 @@ export const MastersList: React.FC<MastersListProps> = ({
 
                         {/* Действия */}
                         <div className={styles.actions}>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleViewMaster(master.id)}
                             className={styles.actionButton}
                           >
                             Профиль мастера
                           </Button>
-                          
-                          
+
+
                         </div>
                       </CardContent>
                     </Card>

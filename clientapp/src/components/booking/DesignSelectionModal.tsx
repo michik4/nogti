@@ -207,10 +207,15 @@ const DesignSelectionModal = ({
                               <span className="text-muted-foreground">Бесплатно</span>
                             )}
                             
-                            {design.additionalDuration && design.additionalDuration > 0 && (
+                            {design.additionalDuration && design.additionalDuration > 0 ? (
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Clock className="w-3 h-3" />
                                 <span className="text-xs">+{design.additionalDuration} мин</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                <span className="text-xs">Время услуги</span>
                               </div>
                             )}
                           </div>
@@ -257,9 +262,14 @@ const DesignSelectionModal = ({
                     <h4 className="font-medium">{selectedDesign.nailDesign.title}</h4>
                     <p className="text-sm text-muted-foreground">
                       {selectedDesign.customPrice && selectedDesign.customPrice > 0 ? `+${roundPrice(selectedDesign.customPrice)}₽` : 'Бесплатно'}
-                      {selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 && 
+                      {selectedDesign.additionalDuration && selectedDesign.additionalDuration > 0 ? 
                         ` • +${selectedDesign.additionalDuration} мин`
-                      }
+                      : (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span className="text-xs">Время услуги</span>
+                        </div>
+                      )}
                     </p>
                   </div>
                 </div>

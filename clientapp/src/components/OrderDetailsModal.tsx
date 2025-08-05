@@ -336,9 +336,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                         <p className="text-xs text-muted-foreground">{order.designSnapshot.title}</p>
                       </div>
                     </div>
-                    <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">
-                      +{formatPrice((order.price || 0) - (order.masterService?.price || 0))}
-                    </span>
+                    {(() => {
+                      const designPrice = (order.price || 0) - (order.masterService?.price || 0);
+                      return designPrice > 0 ? (
+                        <span className="font-semibold text-secondary-foreground bg-secondary/20 px-2 py-1 rounded-md">
+                          +{formatPrice(designPrice)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Бесплатно</span>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

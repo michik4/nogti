@@ -7,6 +7,7 @@ import { masterService } from "@/services/masterService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getImageUrl } from "@/utils/image.util";
 import { roundPrice } from "@/utils/format.util";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceDesignsProps {
   serviceId: string;
@@ -18,7 +19,8 @@ const ServiceDesigns = ({ serviceId, serviceName, onDesignClick }: ServiceDesign
   const [designs, setDesigns] = useState<MasterServiceDesign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
     const fetchServiceDesigns = async () => {
       try {
@@ -86,7 +88,7 @@ const ServiceDesigns = ({ serviceId, serviceName, onDesignClick }: ServiceDesign
             <Card
               key={serviceDesign.id}
               className="p-3 cursor-pointer hover:shadow-md transition-shadow group"
-              onClick={() => onDesignClick?.(serviceDesign)}
+              onClick={() => navigate(`/designs/${serviceDesign.nailDesign.id}`)}
             >
               <div className="aspect-square relative overflow-hidden rounded-lg mb-2">
                 <img
@@ -112,10 +114,11 @@ const ServiceDesigns = ({ serviceId, serviceName, onDesignClick }: ServiceDesign
                   
                   
                   <span className="text-sm font-semibold text-primary">
-                    {serviceDesign.customPrice && serviceDesign.customPrice > 0 
-                  ? `+${roundPrice(serviceDesign.customPrice)}₽` 
-                  : 'В цене услуги'
-                }
+                    {serviceDesign.customPrice && serviceDesign.customPrice > 0 ? (
+                      `+${roundPrice(serviceDesign.customPrice)}₽`
+                    ) : (
+                      'Без доплаты'
+                    )}
                   </span>
                 </div>
                 

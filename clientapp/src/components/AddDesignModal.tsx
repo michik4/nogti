@@ -226,7 +226,6 @@ const AddDesignModal = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Выбор привязки */}
           <div className="space-y-4">
-            <Label className="text-base font-medium">Создать дизайн</Label>
             <div className="border border-border rounded-lg p-4 bg-muted/30">
               <RadioGroup 
                 value={selectedService === 'library' ? 'library' : 'service'} 

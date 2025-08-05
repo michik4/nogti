@@ -122,12 +122,15 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{master.totalOrders || master.completedBookings || 0}</div>
+            <div className="text-2xl font-bold">{master.totalOrders || 0}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
               <CheckCircle className="h-3 w-3 text-green-500" />
               <span>{master.completedOrders || master.completedBookings || 0} выполнено</span>
             </div>
-           
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3 text-yellow-500" />
+              <span>{master.pendingOrders || master.pendingRequests || 0} ожидает</span>
+            </div>
           </CardContent>
         </Card>
 
@@ -160,7 +163,7 @@ const MasterStats: React.FC<MasterStatsProps> = ({ master, className = "" }) => 
             </div>
             <Progress value={calculateCompletionRate()} className="h-2" />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{master.completedOrders || master.completedBookings || 0} из {master.totalOrders || master.completedBookings || 0}</span>
+              <span>{master.completedOrders || master.completedBookings || 0} из {master.totalOrders || 0}</span>
               <span>Выполнено</span>
             </div>
           </CardContent>

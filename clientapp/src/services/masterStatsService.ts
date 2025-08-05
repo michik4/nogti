@@ -29,7 +29,7 @@ class MasterStatsService {
    */
   async getMasterStats(masterId: string): Promise<MasterStats> {
     try {
-      const response = await api.get<MasterStats>(`/api/masters/stats`);
+      const response = await api.get<MasterStats>(`/masters/stats`);
       
       if (response.success && response.data) {
         return response.data;
@@ -47,7 +47,7 @@ class MasterStatsService {
    */
   async getExtendedMasterStats(masterId: string): Promise<MasterStats> {
     try {
-      const response = await api.get<MasterStats>(`/api/masters/stats/extended`);
+      const response = await api.get<MasterStats>(`/masters/stats/extended`);
       
       if (response.success && response.data) {
         return response.data;
@@ -77,7 +77,7 @@ class MasterStatsService {
         pendingOrders: number;
         averageOrderPrice: number;
         totalEarnings: number;
-      }>(`/api/masters/${masterId}/orders/stats`);
+      }>(`/masters/${masterId}/orders/stats`);
       
       if (response.success && response.data) {
         return response.data;
@@ -103,7 +103,7 @@ class MasterStatsService {
         rating: number;
         reviewsCount: number;
         ratingDistribution: number[];
-      }>(`/api/masters/${masterId}/rating/stats`);
+      }>(`/masters/${masterId}/rating/stats`);
       
       if (response.success && response.data) {
         return response.data;
